@@ -148,6 +148,7 @@ let menuItems=[],cart={},activeCategory="All",tableNumber="1",channel=null,custo
 const staffAcceptTimes={};const $=id=>document.getElementById(id),money=n=>"₹"+Number(n||0).toFixed(2);
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function notify(message,type="info"){
+ const legacy=$("notice");if(legacy)legacy.classList.add("hidden");
  let stack=$("toastStack");if(!stack){stack=document.createElement("div");stack.id="toastStack";stack.setAttribute("aria-live","polite");stack.setAttribute("aria-atomic","false");document.body.appendChild(stack)}
  const el=document.createElement("div");el.className="app-toast "+(type==="error"?"error":type==="success"?"success":"");el.textContent=String(message);stack.appendChild(el);
  window.setTimeout(()=>{el.classList.add("out");window.setTimeout(()=>el.remove(),170)},1000);
