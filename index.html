@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,535 +8,87 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--ink:#17251f;--green:#246b4b;--lime:#d8f078;--cream:#faf8f1;--muted:#777d75;--line:#e8e5da;--white:#fff;--red:#b42318}
-*{box-sizing:border-box}
-body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,Arial,sans-serif}
-button,input,select{font:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-.hidden{display:none!important}
-header{background:var(--ink);color:white;padding:17px 5%;position:sticky;top:0;z-index:20}
-.top{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.brand{font-size:22px;font-weight:900;letter-spacing:-.7px}
-.brand span{color:var(--lime)}
-.tag{font-size:12px;color:#d3d8d1;margin-top:5px}
-.table-pill{background:#ffffff17;border:1px solid #ffffff30;padding:9px 13px;border-radius:30px;font-size:12px;white-space:nowrap}
-main{max-width:1200px;margin:auto;padding:25px 22px 115px}
-.hero{position:relative;overflow:hidden;background:#e9e8d6;border-radius:24px;padding:32px;min-height:235px;display:flex;align-items:center;margin-bottom:27px}
-.hero-copy{position:relative;z-index:1;max-width:540px}
-.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:11px;font-weight:800;color:var(--green)}
-.hero h1{font-family:Georgia,serif;font-size:clamp(35px,6vw,58px);line-height:1.03;letter-spacing:-1.7px;margin:13px 0}
-.hero p{color:#59685c;max-width:380px;line-height:1.6;font-size:14px}
-.hero img{position:absolute;right:0;top:0;width:43%;height:100%;object-fit:cover;mask-image:linear-gradient(to right,transparent,#000 22%);opacity:.95}
-.section-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:25px 0 16px}
-h2{font-family:Georgia,serif;font-size:29px;letter-spacing:-.5px;margin:0}
-.muted{color:var(--muted);font-size:13px}
-.categories{display:flex;gap:9px;overflow-x:auto;padding:2px 0 15px;scrollbar-width:none}
-.categories button{white-space:nowrap;border:1px solid var(--line);background:white;color:var(--ink);border-radius:25px;padding:10px 15px;font-size:13px}
-.categories button.active{background:var(--ink);color:white;border-color:var(--ink)}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}
-.card{background:white;border:1px solid var(--line);border-radius:17px;overflow:hidden;transition:transform .22s,box-shadow .22s;animation:rise .35s ease both}
-.card:hover{transform:translateY(-4px);box-shadow:0 12px 28px #17251f12}
-.photo{height:175px;position:relative;background:#ebe8dd;overflow:hidden}
-.photo img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
-.card:hover .photo img{transform:scale(1.05)}
-.photo-label{position:absolute;top:10px;left:10px;background:#fffdf0e8;border-radius:20px;padding:6px 9px;font-size:10px;font-weight:800}
-.card-body{padding:14px}
-.card h3{font-size:16px;margin:0 0 7px}
-.card .desc{color:var(--muted);font-size:12px;line-height:1.5;min-height:33px}
-.card-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:13px}
-.price{font-size:17px;font-weight:900}
-.add{width:38px;height:38px;border-radius:12px;background:var(--green);color:white;font-size:24px;border:0}
-.add:hover{background:var(--ink)}
-.notice{padding:13px 15px;border-radius:12px;background:#e5f3e8;color:#205b3b;margin-bottom:15px;overflow-wrap:anywhere;font-size:13px}
-.notice.error{background:#fee8e6;color:var(--red)}
-.notice.info{background:#e8f1fa;color:#24527b}
-.bottom-cart{position:fixed;z-index:30;bottom:14px;left:50%;transform:translateX(-50%);width:min(650px,calc(100% - 26px));padding:10px;background:#17251f;color:white;border-radius:17px;box-shadow:0 12px 40px #0003;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.bottom-cart button{background:var(--lime);color:var(--ink);font-weight:800;border:0;border-radius:11px;padding:13px 17px}
-.cart-count{font-size:11px;color:#d4dfd5;margin-top:4px}
-.panel{background:white;border:1px solid var(--line);padding:22px;border-radius:18px;margin-top:20px}
-.panel h2{margin-bottom:14px}
-.field{margin:13px 0}
-.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
-.field input,.field select{width:100%;padding:13px;border:1px solid #d9ddd4;border-radius:10px;background:white;outline-color:var(--green)}
-.primary{border:0;background:var(--green);color:white;border-radius:11px;padding:13px 17px;font-weight:800}
-.secondary{border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:10px 13px}
-.cart-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}
-.qty{display:flex;align-items:center;gap:8px}
-.qty button{width:30px;height:30px;border:1px solid var(--line);background:white;border-radius:9px}
-.total-row{display:flex;justify-content:space-between;font-weight:900;font-size:18px;padding:17px 0}
-.confirm{text-align:center;padding:35px 15px}
-.confirm-icon{margin:auto;width:70px;height:70px;border-radius:50%;display:grid;place-items:center;background:#e0f2df;color:var(--green);font-size:35px}
-.order-code{font-size:35px;font-weight:900;letter-spacing:3px;margin:14px 0}
-.order{border:1px solid var(--line);border-radius:13px;padding:15px;margin:12px 0;background:white}
-.order select{padding:9px;border:1px solid var(--line);border-radius:8px}
-.order-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-.order-item-photo{width:54px;height:54px;flex:0 0 54px;border-radius:10px;overflow:hidden;background:#ebe8dd}
-.order-item-photo img{width:100%;height:100%;object-fit:cover}
-.order-item-info{flex:1;min-width:0}
-.order-item-info strong{display:block;overflow-wrap:anywhere}
-.order-item-price{white-space:nowrap;font-weight:800}
-.order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.served-btn{border:0;background:#246b4b;color:white;border-radius:10px;padding:11px 14px;font-weight:800}
-@media(max-width:420px){.order-item-photo{width:46px;height:46px;flex-basis:46px}.order-item-price{font-size:12px}}
-footer{text-align:center;padding:30px 12px;color:var(--muted);font-size:12px}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.photo{height:155px}}
-@media(max-width:650px){
- header{padding:14px 16px}
- .brand{font-size:20px}
- main{padding:16px 13px 110px}
- .hero{min-height:215px;padding:23px 19px;border-radius:19px}
- .hero h1{font-size:39px;max-width:280px}
- .hero img{width:58%;opacity:.38;mask-image:linear-gradient(to right,transparent,#000 35%)}
- .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
- .photo{height:135px}
- .card-body{padding:11px}
- .card h3{font-size:14px}
- .card .desc{font-size:11px}
- .price{font-size:15px}
- .add{width:34px;height:34px}
- h2{font-size:25px}
- .panel{padding:16px}
-}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}
+header{background:var(--ink);color:white;padding:17px 5%;position:sticky;top:0;z-index:20}.top{max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-size:22px;font-weight:900;letter-spacing:-.7px}.brand span{color:var(--lime)}.tag{font-size:12px;color:#d3d8d1;margin-top:5px}.table-pill{background:#ffffff17;border:1px solid #ffffff30;padding:9px 13px;border-radius:30px;font-size:12px;white-space:nowrap}
+main{max-width:1200px;margin:auto;padding:25px 22px 115px}.hero{position:relative;overflow:hidden;background:#e9e8d6;border-radius:24px;padding:32px;min-height:235px;display:flex;align-items:center;margin-bottom:27px}.hero-copy{position:relative;z-index:1;max-width:540px}.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:11px;font-weight:800;color:var(--green)}.hero h1{font-family:Georgia,serif;font-size:clamp(35px,6vw,58px);line-height:1.03;letter-spacing:-1.7px;margin:13px 0}.hero p{color:#59685c;max-width:380px;line-height:1.6;font-size:14px}.hero img{position:absolute;right:0;top:0;width:43%;height:100%;object-fit:cover;mask-image:linear-gradient(to right,transparent,#000 22%);opacity:.95}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:25px 0 16px}h2{font-family:Georgia,serif;font-size:29px;letter-spacing:-.5px;margin:0}.muted{color:var(--muted);font-size:13px}.categories{display:flex;gap:9px;overflow-x:auto;padding:2px 0 15px;scrollbar-width:none}.categories button{white-space:nowrap;border:1px solid var(--line);background:white;color:var(--ink);border-radius:25px;padding:10px 15px;font-size:13px}.categories button.active{background:var(--ink);color:white;border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}.card{background:white;border:1px solid var(--line);border-radius:17px;overflow:hidden;transition:transform .22s,box-shadow .22s;animation:rise .35s ease both}.card:hover{transform:translateY(-4px);box-shadow:0 12px 28px #17251f12}.photo{height:175px;position:relative;background:#ebe8dd;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover;transition:transform .4s}.card:hover .photo img{transform:scale(1.05)}.photo-label{position:absolute;top:10px;left:10px;background:#fffdf0e8;border-radius:20px;padding:6px 9px;font-size:10px;font-weight:800}.card-body{padding:14px}.card h3{font-size:16px;margin:0 0 7px}.card .desc{color:var(--muted);font-size:12px;line-height:1.5;min-height:33px}.card-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:13px}.price{font-size:17px;font-weight:900}.add{width:38px;height:38px;border-radius:12px;background:var(--green);color:white;font-size:24px;border:0}.add:hover{background:var(--ink)}
+.notice{padding:13px 15px;border-radius:12px;background:#e5f3e8;color:#205b3b;margin-bottom:15px;overflow-wrap:anywhere;font-size:13px}.notice.error{background:#fee8e6;color:var(--red)}.notice.info{background:#e8f1fa;color:#24527b}.bottom-cart{position:fixed;z-index:30;bottom:14px;left:50%;transform:translateX(-50%);width:min(650px,calc(100% - 26px));padding:10px;background:#17251f;color:white;border-radius:17px;box-shadow:0 12px 40px #0003;display:flex;align-items:center;justify-content:space-between;gap:12px}.bottom-cart button{background:var(--lime);color:var(--ink);font-weight:800;border:0;border-radius:11px;padding:13px 17px}.cart-count{font-size:11px;color:#d4dfd5;margin-top:4px}.panel{background:white;border:1px solid var(--line);padding:22px;border-radius:18px;margin-top:20px}.panel h2{margin-bottom:14px}.field{margin:13px 0}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}.field input,.field select{width:100%;padding:13px;border:1px solid #d9ddd4;border-radius:10px;background:white;outline-color:var(--green)}.primary{border:0;background:var(--green);color:white;border-radius:11px;padding:13px 17px;font-weight:800}.secondary{border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:10px 13px}.cart-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)}.qty{display:flex;align-items:center;gap:8px}.qty button{width:30px;height:30px;border:1px solid var(--line);background:white;border-radius:9px}.total-row{display:flex;justify-content:space-between;font-weight:900;font-size:18px;padding:17px 0}.confirm{text-align:center;padding:35px 15px}.confirm-icon{margin:auto;width:70px;height:70px;border-radius:50%;display:grid;place-items:center;background:#e0f2df;color:var(--green);font-size:35px}.order-code{font-size:35px;font-weight:900;letter-spacing:3px;margin:14px 0}.order{border:1px solid var(--line);border-radius:13px;padding:15px;margin:12px 0;background:white}.order select{padding:9px;border:1px solid var(--line);border-radius:8px}.order-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.order-item-photo{width:54px;height:54px;flex:0 0 54px;border-radius:10px;overflow:hidden;background:#ebe8dd}.order-item-photo img{width:100%;height:100%;object-fit:cover}.order-item-info{flex:1;min-width:0}.order-item-info strong{display:block;overflow-wrap:anywhere}.order-item-price{white-space:nowrap;font-weight:800}.order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.served-btn{border:0;background:#246b4b;color:white;border-radius:10px;padding:11px 14px;font-weight:800}
+@media(max-width:420px){.order-item-photo{width:46px;height:46px;flex-basis:46px}.order-item-price{font-size:12px}}footer{text-align:center;padding:30px 12px;color:var(--muted);font-size:12px}@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.photo{height:155px}}@media(max-width:650px){header{padding:14px 16px}.brand{font-size:20px}main{padding:16px 13px 110px}.hero{min-height:215px;padding:23px 19px;border-radius:19px}.hero h1{font-size:39px;max-width:280px}.hero img{width:58%;opacity:.38;mask-image:linear-gradient(to right,transparent,#000 35%)}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.photo{height:135px}.card-body{padding:11px}.card h3{font-size:14px}.card .desc{font-size:11px}.price{font-size:15px}.add{width:34px;height:34px}h2{font-size:25px}.panel{padding:16px}}
 </style>
 </head>
 <body>
-<header>
-  <div class="top">
-    <div>
-      <div class="brand">TABLE <span>&</span> THYME.</div>
-      <div class="tag">Good food. Good mood.</div>
-    </div>
-    <div class="table-pill" id="tableLabel">Finding your table...</div>
-  </div>
-</header>
-
-<main>
-  <div id="notice" class="notice hidden"></div>
-
-  <section id="customerView">
-    <div class="hero">
-      <div class="hero-copy">
-        <div class="eyebrow">Made fresh, served with love</div>
-        <h1>A little taste of happiness.</h1>
-        <p>Explore our menu, choose your favourites and order right from your table.</p>
-      </div>
-      <img src="coldcoffee.jpg" alt="" onerror="this.style.display='none'">
-    </div>
-
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Our kitchen</div>
-        <h2>Find your favourite</h2>
-      </div>
-      <span id="menuCount" class="muted"></span>
-    </div>
-    <div id="categories" class="categories"></div>
-    <div id="menu" class="grid">Loading fresh menu...</div>
-
-    <section id="cartPanel" class="panel hidden">
-      <div class="section-head" style="margin-top:0">
-        <h2>Your order</h2>
-        <button class="secondary" onclick="closeCart()">Continue browsing</button>
-      </div>
-      <div id="cartRows"></div>
-      <div class="total-row"><span>Total</span><span id="cartTotal">₹0</span></div>
-      <div class="field"><label for="customerName">Your name *</label><input id="customerName" maxlength="100" placeholder="Enter your name"></div>
-      <div class="field"><label for="customerPhone">Phone number (optional)</label><input id="customerPhone" maxlength="20" type="tel" placeholder="Your phone number"></div>
-      <button class="primary" id="submitBtn" style="width:100%" onclick="submitOrder()">Place my order →</button>
-      <p class="muted">Your order will be sent to the restaurant.</p>
-    </section>
-
-    <section id="confirmation" class="panel hidden">
-      <div class="confirm">
-        <div class="confirm-icon">✓</div>
-        <div class="eyebrow" style="margin-top:18px">Order received</div>
-        <h2 style="margin-top:9px">You're all set!</h2>
-        <p class="muted">Show this number to your waiter if you need help.</p>
-        <div id="confirmationCode" class="order-code">#------</div>
-        <p id="confirmationTotal"></p>
-        <p id="confirmationTable" class="muted"></p>
-        <button class="primary" onclick="newOrder()">Order something else</button>
-      </div>
-    </section>
-  </section>
-
-  <section id="staffView" class="hidden">
-    <div class="panel" id="loginPanel">
-      <div class="eyebrow">Team access</div><h2>Staff dashboard</h2>
-      <p class="muted">Sign in using your Supabase staff account.</p>
-      <form id="loginForm">
-        <div class="field"><label>Email</label><input id="staffEmail" type="email" required autocomplete="username"></div>
-        <div class="field"><label>Password</label><input id="staffPassword" type="password" required autocomplete="current-password"></div>
-        <button class="primary" style="width:100%">Sign in</button>
-      </form>
-    </div>
-    <div id="dashboard" class="hidden">
-      <div class="panel">
-        <div class="section-head" style="margin-top:0"><h2>Kitchen & orders</h2><button class="secondary" onclick="loadOrders()">Refresh</button></div>
-        <p class="muted">New orders appear here when live updates are enabled.</p>
-        <button class="secondary" onclick="logout()">Sign out</button>
-      </div>
-      <div id="orders"></div>
-    </div>
-  </section>
-</main>
-
-<div id="bottomCart" class="bottom-cart hidden">
-  <div><strong id="bottomTotal">₹0</strong><div id="bottomCount" class="cart-count">0 items</div></div>
-  <button onclick="openCart()">View cart →</button>
-</div>
-<footer>Prepared with care · Table & Thyme</footer>
-
+<header><div class="top"><div><div class="brand">TABLE <span>&</span> THYME.</div><div class="tag">Good food. Good mood.</div></div><div class="table-pill" id="tableLabel">Finding your table...</div></div></header>
+<main><div id="notice" class="notice hidden"></div><section id="customerView">
+<div class="hero"><div class="hero-copy"><div class="eyebrow">Made fresh, served with love</div><h1>A little taste of happiness.</h1><p>Explore our menu, choose your favourites and order right from your table.</p></div><img src="coldcoffee.jpg" alt="" onerror="this.style.display='none'"></div>
+<div class="section-head"><div><div class="eyebrow">Our kitchen</div><h2>Find your favourite</h2></div><span id="menuCount" class="muted"></span></div><div id="categories" class="categories"></div><div id="menu" class="grid">Loading fresh menu...</div>
+<section id="cartPanel" class="panel hidden"><div class="section-head" style="margin-top:0"><h2>Your order</h2><button class="secondary" onclick="closeCart()">Continue browsing</button></div><div id="cartRows"></div><div class="total-row"><span>Total</span><span id="cartTotal">₹0</span></div><div class="field"><label for="customerName">Your name *</label><input id="customerName" maxlength="100" placeholder="Enter your name"></div><div class="field"><label for="customerPhone">Phone number (optional)</label><input id="customerPhone" maxlength="20" type="tel" placeholder="Your phone number"></div><button class="primary" id="submitBtn" style="width:100%" onclick="submitOrder()">Place my order →</button><p class="muted">Your order will be sent to the restaurant.</p></section>
+<section id="confirmation" class="panel hidden"><div class="confirm"><div class="confirm-icon">✓</div><div class="eyebrow" style="margin-top:18px">Order received</div><h2 style="margin-top:9px">You're all set!</h2><p class="muted">Show this number to your waiter if you need help.</p><div id="confirmationCode" class="order-code">#------</div><p id="confirmationTotal"></p><p id="confirmationTable" class="muted"></p><button class="primary" onclick="newOrder()">Order something else</button></div></section>
+</section>
+<section id="staffView" class="hidden"><div class="panel" id="loginPanel"><div class="eyebrow">Team access</div><h2>Staff dashboard</h2><p class="muted">Sign in using your Supabase staff account.</p><form id="loginForm"><div class="field"><label>Email</label><input id="staffEmail" type="email" required autocomplete="username"></div><div class="field"><label>Password</label><input id="staffPassword" type="password" required autocomplete="current-password"></div><button class="primary" style="width:100%">Sign in</button></form></div><div id="dashboard" class="hidden"><div class="panel"><div class="section-head" style="margin-top:0"><h2>Kitchen & orders</h2><button class="secondary" onclick="loadOrders()">Refresh</button></div><p class="muted">New orders appear here when live updates are enabled.</p><button class="secondary" onclick="logout()">Sign out</button></div><div id="orders"></div></div></section>
+</main><div id="bottomCart" class="bottom-cart hidden"><div><strong id="bottomTotal">₹0</strong><div id="bottomCount" class="cart-count">0 items</div></div><button onclick="openCart()">View cart →</button></div><footer>Prepared with care · Table & Thyme</footer>
 <script>
-const SUPABASE_URL = "https://savepmyxoctonhjqgdxj.supabase.co";
-const SUPABASE_KEY = "sb_publishable_JAYqblm99lorQYbwKYDRgg_gFP-cgYo";
-
-const DEFAULT_RESTAURANT = "11111111-1111-4111-8111-111111111111";
-const DEFAULT_TABLE = "22222222-2222-4222-8222-222222222222";
-
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const params = new URLSearchParams(location.search);
-const restaurantId = params.get("restaurant") || DEFAULT_RESTAURANT;
-const tableId = params.get("table") || DEFAULT_TABLE;
-const staffMode = params.get("staff") === "1";
-
-let menuItems = [];
-let cart = {};
-let activeCategory = "All";
-let tableNumber = "1";
-let channel = null;
-
-const $ = id => document.getElementById(id);
-const money = n => "₹" + Number(n || 0).toFixed(2);
-
-function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[c]);
-}
-function slug(v) {
-  return String(v || "").toLowerCase().replace(/[^a-z0-9]+/g,"").trim();
-}
-function notify(message,type="info") {
-  const el=$("notice");
-  el.textContent=message;
-  el.className="notice "+type;
-  el.classList.remove("hidden");
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-function shortCode(id) {
-  return String(id || "").replace(/-/g,"").slice(0,6).toUpperCase();
-}
-
-async function init() {
-  $("customerView").classList.toggle("hidden",staffMode);
-  $("staffView").classList.toggle("hidden",!staffMode);
-  if(staffMode){await checkSession();return;}
-  await loadTable();
-  await loadMenu();
-}
-
-async function loadTable() {
-  const {data,error}=await db.from("restaurant_tables")
-    .select("table_number")
-    .eq("id",tableId)
-    .eq("restaurant_id",restaurantId)
-    .maybeSingle();
-
-  if(error || !data) {
-    $("tableLabel").textContent="Table not found";
-    notify("This QR table is not configured correctly. Please contact the restaurant.", "error");
-    return;
-  }
-  tableNumber=String(data.table_number).replace(/^0+/,"") || "1";
-  $("tableLabel").textContent="TABLE "+tableNumber;
-  $("confirmationTable").textContent="Table "+tableNumber;
-}
-
-async function loadMenu() {
-  $("menu").textContent="Loading menu...";
-  const {data,error}=await db.from("menu_items")
-    .select("id,name,price,category,image_path")
-    .eq("restaurant_id",restaurantId)
-    .eq("is_available",true)
-    .order("name");
-
-  if(error) {
-    $("menu").textContent="Menu could not be loaded.";
-    notify("Menu error: "+error.message,"error");
-    return;
-  }
-  menuItems=data||[];
-  renderCategories();
-  renderMenu();
-}
-
-function renderCategories() {
-  const cats=["All",...new Set(menuItems.map(x=>x.category||"Popular"))];
-  if(!cats.includes(activeCategory))activeCategory="All";
-  $("categories").innerHTML=cats.map(c=>
-    `<button class="${c===activeCategory?"active":""}" onclick="setCategory('${esc(c)}')">${esc(c)}</button>`
-  ).join("");
-  $("menuCount").textContent=menuItems.length+" items";
-}
-function setCategory(c) {
-  activeCategory=c;
-  renderCategories();
-  renderMenu();
-}
-// All 60 food photos are stored in the repository root and referenced by this HTML file.
-// Known menu names map to the matching uploaded JPG filename.
-const IMAGE_OVERRIDES = {
-  coffee:"ccoffee.jpg", coldcoffee:"coldcoffee.jpg", tea:"tea.jpg",
-  masalachai:"masala-chai.jpg", cappuccino:"cappuccino.jpg", latte:"latte.jpg",
-  espresso:"espresso.jpg", burger:"burger.jpg", cheeseburger:"cheeseburger.jpg",
-  pizza:"pizza.jpg", margheritapizza:"margherita-pizza.jpg", sandwich:"sandwich.jpg",
-  fries:"fries.jpg", frenchfries:"fries.jpg", pasta:"pasta.jpg", noodles:"noodles.jpg",
-  maggi:"maggi.jpg", momos:"momos.jpg", dosa:"dosa.jpg", idli:"idli.jpg",
-  samosa:"samosa.jpg", vadapav:"vada-pav.jpg", pavbhaji:"pav-bhaji.jpg",
-  poha:"poha.jpg", biryani:"biryani.jpg", thali:"thali.jpg", cake:"cake.jpg",
-  brownie:"brownie.jpg", icecream:"ice-cream.jpg", milkshake:"milkshake.jpg",
-  lemonade:"lemonade.jpg", water:"water.jpg", mineralwater:"water.jpg"
+const SUPABASE_URL="https://savepmyxoctonhjqgdxj.supabase.co";
+const SUPABASE_KEY="sb_publishable_JAYqblm99lorQYbwKYDRgg_gFP-cgYo";
+const DEFAULT_RESTAURANT="11111111-1111-4111-8111-111111111111";
+const DEFAULT_TABLE="22222222-2222-4222-8222-222222222222";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const params=new URLSearchParams(location.search),restaurantId=params.get("restaurant")||DEFAULT_RESTAURANT,tableId=params.get("table")||DEFAULT_TABLE,staffMode=params.get("staff")==="1";
+let menuItems=[],cart={},activeCategory="All",tableNumber="1",channel=null;
+const $=id=>document.getElementById(id),money=n=>"₹"+Number(n||0).toFixed(2);
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function notify(message,type="info"){const el=$("notice");el.textContent=message;el.className="notice "+type;el.classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})}
+function shortCode(id){return String(id||"").replace(/-/g,"").slice(0,6).toUpperCase()}
+async function init(){$("customerView").classList.toggle("hidden",staffMode);$("staffView").classList.toggle("hidden",!staffMode);if(staffMode){await checkSession();return}await loadTable();await loadMenu()}
+async function loadTable(){const {data,error}=await db.from("restaurant_tables").select("table_number").eq("id",tableId).eq("restaurant_id",restaurantId).maybeSingle();if(error||!data){$("tableLabel").textContent="Table not found";notify("This QR table is not configured correctly. Please contact the restaurant.","error");return}tableNumber=String(data.table_number).replace(/^0+/,"")||"1";$("tableLabel").textContent="TABLE "+tableNumber;$("confirmationTable").textContent="Table "+tableNumber}
+async function loadMenu(){$("menu").textContent="Loading menu...";const {data,error}=await db.from("menu_items").select("id,name,price,category,image_path").eq("restaurant_id",restaurantId).eq("is_available",true).order("name");if(error){$("menu").textContent="Menu could not be loaded.";notify("Menu error: "+error.message,"error");return}menuItems=data||[];renderCategories();renderMenu()}
+function renderCategories(){const cats=["All",...new Set(menuItems.map(x=>x.category||"Popular"))];if(!cats.includes(activeCategory))activeCategory="All";$("categories").innerHTML=cats.map(c=>'<button class="'+(c===activeCategory?"active":"")+'" onclick="setCategory(\''+esc(c)+'\')">'+esc(c)+"</button>").join("");$("menuCount").textContent=menuItems.length+" items"}
+function setCategory(c){activeCategory=c;renderCategories();renderMenu()}
+// Images are stored at the root of the GitHub Pages site. Prefer the exact database image_path.
+const IMAGE_BY_NORMALIZED_NAME={
+  alfredopasta:"alfredopasta.jpg",bakedpasta:"bakedpasta.jpg",biryani:"biryani.jpg",brownie:"brownie.jpg",
+  butternaan:"butternaan.jpg",cappuccino:"cappuccino.jpg",chai:"masala-chai.jpg",masalachai:"masalachai.jpg",
+  cheeseballs:"cheeseballs.jpg",cheeseburger:"cheeseburger.jpg",cheesefries:"cheesefries.jpg",cheesesandwich:"cheesesandwich.jpg",
+  chillipaneer:"chillipaneer.jpg",chocolatecoldcoffee:"chocolatecoldcoffee.jpg",chocolateshake:"chocolateshake.jpg",
+  classicburger:"burger.jpg",classicpasta:"pasta.jpg",classicpizza:"pizza.jpg",classicsandwich:"sandwich.jpg",
+  clubsandwich:"clubsandwich.jpg",coffee:"coffee.jpg",coldcoffee:"coldcoffee.jpg",creamycoffee:"ccoffee.jpg",
+  daltadka:"daltadka.jpg",farmhousepizza:"farmhousepizza.jpg",frenchfries:"frenchfries.jpg",freshlimesoda:"freshlimesoda.jpg",
+  gulabjamun:"gulabjamun.jpg",hotcoffee:"hotcoffee.jpg",icecream:"ice-cream.jpg",jeerarice:"jeerarice.jpg",
+  lemonade:"lemonade.jpg",mangoshake:"mangoshake.jpg",margheritapizza:"margheritapizza.jpg",mineralwater:"mineralwater.jpg",
+  mozzarellasticks:"mozzarellasticks.jpg",onionrings:"onionrings.jpg",oreoshake:"oreoshake.jpg",paneerburger:"paneerburger.jpg",
+  paneerbuttermasala:"paneerbuttermasala.jpg",paneersandwich:"paneersandwich.jpg",paneertikka:"paneertikka.jpg",
+  pastaclassic:"pasta.jpg",periperifries:"periperifries.jpg",potatowedges:"potatowedges.jpg",redsaucepasta:"redsaucepasta.jpg",
+  specialpizza:"specialpizza.jpg",springrolls:"springrolls.jpg",strawberryshake:"strawberryshake.jpg",
+  vanilllaicecream:"vanillaicecream.jpg",vanillaicecream:"vanillaicecream.jpg",vegburger:"vegburger.jpg",
+  vegfriedrice:"vegfriedrice.jpg",vegfriedricespecial:"vegfriedrice.jpg",veghakkanoodles:"veghakkanoodles.jpg",
+  vegmanchurian:"vegmanchurian.jpg",vegnuggets:"vegnuggets.jpg",vegpakora:"vegpakora.jpg",vegpulao:"vegpulao.jpg",
+  vegsandwich:"vegsandwich.jpg",vegsandwichspecial:"vegsandwich.jpg",whitesaucepasta:"whitesaucepasta.jpg"
 };
-function imageFor(item) {
-  const name = String(item?.name || item?.item_name || "food")
-    .toLowerCase().replace(/[^a-z0-9]/g, "");
-
-  // Each menu item maps to its own uploaded dish photo.
-  const exact = {
-    alfredopasta:"alfredopasta.jpg", bakedpasta:"bakedpasta.jpg",
-    biryani:"biryani.jpg", brownie:"brownie.jpg", burger:"burger.jpg",
-    butternaan:"butternaan.jpg", cappuccino:"cappuccino.jpg",
-    coffee:"coffee.jpg", ccoffee:"ccoffee.jpg", coldcoffee:"coldcoffee.jpg",
-    chocolatecoldcoffee:"chocolatecoldcoffee.jpg", cheeseballs:"cheeseballs.jpg",
-    cheeseburger:"cheeseburger.jpg", cheesefries:"cheesefries.jpg",
-    cheesesandwich:"cheesesandwich.jpg", chillipaneer:"chillipaneer.jpg",
-    chocolateshake:"chocolateshake.jpg", clubsandwich:"clubsandwich.jpg",
-    daltadka:"daltadka.jpg", farmhousepizza:"farmhousepizza.jpg",
-    frenchfries:"frenchfries.jpg", freshlimesoda:"freshlimesoda.jpg",
-    fries:"fries.jpg", gulabjamun:"gulabjamun.jpg", hotcoffee:"hotcoffee.jpg",
-    icecream:"ice-cream.jpg", vanillaicecream:"vanillaicecream.jpg",
-    jeerarice:"jeerarice.jpg", lemonade:"lemonade.jpg", mangoshake:"mangoshake.jpg",
-    margheritapizza:"margheritapizza.jpg", masalachai:"masalachai.jpg",
-    mineralwater:"mineralwater.jpg", mozzarellasticks:"mozzarellasticks.jpg",
-    onionrings:"onionrings.jpg", oreoshake:"oreoshake.jpg",
-    paneerburger:"paneerburger.jpg", paneerbuttermasala:"paneerbuttermasala.jpg",
-    paneersandwich:"paneersandwich.jpg", paneertikka:"paneertikka.jpg",
-    pasta:"pasta.jpg", periperifries:"periperifries.jpg", pestopasta:"pestopasta.jpg",
-    pizza:"pizza.jpg", potatowedges:"potatowedges.jpg",
-    redsaucepasta:"redsaucepasta.jpg", sandwich:"sandwich.jpg",
-    specialpizza:"specialpizza.jpg", springrolls:"springrolls.jpg",
-    strawberryshake:"strawberryshake.jpg", vegburger:"vegburger.jpg",
-    vegfriedrice:"vegfriedrice.jpg", veghakkanoodles:"veghakkanoodles.jpg",
-    vegmanchurian:"vegmanchurian.jpg", vegnuggets:"vegnuggets.jpg",
-    vegpakora:"vegpakora.jpg", vegpulao:"vegpulao.jpg",
-    vegsandwich:"vegsandwich.jpg", whitesaucepasta:"whitesaucepasta.jpg",
-    tea:"masala-chai.jpg", chai:"masala-chai.jpg", masalachai:"masalachai.jpg", "masala tea":"masala-chai.jpg"
-  };
-
-  if (exact[name]) return exact[name];
-  // Only use a same-name image when that exact file exists in the image set.
-  return name + ".jpg";
+function imageFor(item){
+  const path=String(item?.image_path||"").trim();
+  // Supabase's path must be a simple root filename, not an injected URL.
+  if(path && /^[a-z0-9-]+\.jpg$/i.test(path))return path;
+  const normalized=String(item?.name||item?.item_name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  return IMAGE_BY_NORMALIZED_NAME[normalized]||"";
 }
-function imageFallback(img) {
-  // Never substitute an unrelated stock food photo; show a neutral placeholder instead.
-  img.onerror = null;
-  img.src = "https://placehold.co/600x400/f0eee4/536557?text=Photo+not+available";
-}
-function renderMenu() {
-  const list=menuItems.filter(x=>activeCategory==="All"||(x.category||"Popular")===activeCategory);
-  if(!list.length) {
-    $("menu").innerHTML="<p>No items in this category yet.</p>";
-    return;
-  }
-  $("menu").innerHTML=list.map((item,index)=>`
-    <article class="card" style="animation-delay:${Math.min(index*35,250)}ms">
-      <div class="photo">
-        <img loading="lazy" src="${esc(imageFor(item))}" alt="${esc(item.name)}"
-          onerror="imageFallback(this)">
-        <span class="photo-label">${esc(item.category||"Popular")}</span>
-      </div>
-      <div class="card-body">
-        <h3>${esc(item.name)}</h3>
-        <div class="desc">Freshly prepared · Made to order</div>
-        <div class="card-foot"><span class="price">${money(item.price)}</span>
-          <button class="add" aria-label="Add ${esc(item.name)}" onclick="addItem('${item.id}')">+</button>
-        </div>
-      </div>
-    </article>`).join("");
-}
-function addItem(id) {
-  const item=menuItems.find(x=>x.id===id);
-  if(!item)return;
-  if(!cart[id])cart[id]={item,quantity:0};
-  if(cart[id].quantity<50)cart[id].quantity++;
-  renderCart();
-}
-function changeQty(id,delta) {
-  if(!cart[id])return;
-  cart[id].quantity+=delta;
-  if(cart[id].quantity<=0)delete cart[id];
-  renderCart();
-}
-function cartTotal() {
-  return Object.values(cart).reduce((s,x)=>s+Number(x.item.price)*x.quantity,0);
-}
-function cartCount() {
-  return Object.values(cart).reduce((s,x)=>s+x.quantity,0);
-}
-function renderCart() {
-  const entries=Object.values(cart);
-  $("bottomCart").classList.toggle("hidden",!entries.length);
-  $("bottomTotal").textContent=money(cartTotal());
-  $("bottomCount").textContent=cartCount()+" items";
-  $("cartTotal").textContent=money(cartTotal());
-  $("cartRows").innerHTML=entries.map(({item,quantity})=>`
-    <div class="cart-row">
-      <div><strong>${esc(item.name)}</strong><div class="muted">${money(item.price)} each</div></div>
-      <div class="qty">
-        <button onclick="changeQty('${item.id}',-1)">−</button>
-        <strong>${quantity}</strong>
-        <button onclick="changeQty('${item.id}',1)">+</button>
-      </div>
-    </div>`).join("");
-}
-function openCart() {
-  $("cartPanel").classList.remove("hidden");
-  $("cartPanel").scrollIntoView({behavior:"smooth",block:"start"});
-}
-function closeCart() {
-  $("cartPanel").classList.add("hidden");
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-async function submitOrder() {
-  const name=$("customerName").value.trim();
-  const phone=$("customerPhone").value.trim();
-  const entries=Object.values(cart);
-  if(!name)return notify("Please enter your name.","error");
-  if(!entries.length)return notify("Please add food to your cart first.","error");
-  if(!tableId || !restaurantId)return notify("Invalid QR code.","error");
-
-  const btn=$("submitBtn");
-  btn.disabled=true;btn.textContent="Sending order...";
-  try {
-    const {data,error}=await db.rpc("create_order",{
-      p_restaurant_id:restaurantId,
-      p_table_id:tableId,
-      p_customer_name:name,
-      p_customer_phone:phone||null,
-      p_items:entries.map(x=>({id:x.item.id,quantity:x.quantity}))
-    });
-    if(error)throw error;
-
-    const total=cartTotal();
-    $("confirmationCode").textContent="#"+shortCode(data);
-    $("confirmationTotal").textContent="Order total: "+money(total);
-    $("confirmationTable").textContent="Table "+tableNumber;
-    cart={};renderCart();
-    $("cartPanel").classList.add("hidden");
-    $("confirmation").classList.remove("hidden");
-    $("confirmation").scrollIntoView({behavior:"smooth"});
-  } catch(e) {
-    notify("Order could not be placed: "+e.message,"error");
-  } finally {
-    btn.disabled=false;btn.textContent="Place my order →";
-  }
-}
-function newOrder() {
-  $("confirmation").classList.add("hidden");
-  $("customerName").value="";
-  $("customerPhone").value="";
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-/* STAFF DASHBOARD */
-$("loginForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const {error}=await db.auth.signInWithPassword({
-    email:$("staffEmail").value.trim(),
-    password:$("staffPassword").value
-  });
-  if(error){notify("Login failed: "+error.message,"error");return;}
-  await checkSession();
-});
-async function checkSession() {
-  const {data}=await db.auth.getSession();
-  if(data.session) {
-    $("loginPanel").classList.add("hidden");
-    $("dashboard").classList.remove("hidden");
-    await loadOrders();
-    subscribeOrders();
-  }
-}
-async function loadOrders() {
-  $("orders").textContent="Loading orders...";
-  const {data:orders,error}=await db.from("orders")
-    .select("id,order_code,table_id,customer_name,customer_phone,status,total,created_at")
-    .eq("restaurant_id",restaurantId)
-    .order("created_at",{ascending:false}).limit(100);
-  if(error){$("orders").textContent="Orders could not load.";notify(error.message,"error");return;}
-  // Served/cancelled orders remain in Supabase but are hidden from the active staff list.
-  const activeOrders = (orders || []).filter(o => !["served", "cancelled"].includes(String(o.status || "").toLowerCase()));
-  if(!activeOrders.length){$("orders").textContent="No active orders. Served and cancelled orders are hidden.";return;}
-
-  const {data:tables}=await db.from("restaurant_tables")
-    .select("id,table_number").eq("restaurant_id",restaurantId);
-  const {data:items,error:itemError}=await db.from("order_items")
-    .select("order_id,item_name,quantity,unit_price")
-    .in("order_id",activeOrders.map(o=>o.id));
-  if(itemError){notify(itemError.message,"error");return;}
-
-  $("orders").innerHTML=activeOrders.map(o=>{
-    const table=(tables||[]).find(t=>t.id===o.table_id);
-    const code=o.order_code||shortCode(o.id);
-    return `<article class="order">
-      <div class="section-head" style="margin-top:0">
-        <div><div class="eyebrow">Order #${esc(code)}</div><h2 style="font-size:23px">Table ${esc(table?String(table.table_number).replace(/^0+/,"")||"1":"?")}</h2></div>
-        <span class="muted">${esc(new Date(o.created_at).toLocaleTimeString())}</span>
-      </div>
-      <p><strong>${esc(o.customer_name)}</strong> · ${esc(o.customer_phone||"No phone")}</p>
-      ${(items||[]).filter(i=>i.order_id===o.id).map(i=>`<div class="order-item">
-        <div class="order-item-photo"><img loading="lazy" src="${esc(imageFor({name:i.item_name}))}" alt="${esc(i.item_name)}" onerror="imageFallback(this)"></div>
-        <div class="order-item-info"><strong>${esc(i.item_name)} × ${i.quantity}</strong><span class="muted">${money(i.unit_price)} each</span></div>
-        <span class="order-item-price">${money(i.unit_price*i.quantity)}</span>
-      </div>`).join("")}
-      <div class="total-row"><span>Total</span><span>${money(o.total)}</span></div>
-      <div class="field"><label>Order status</label><select id="status-${o.id}">${["new","accepted","preparing","ready","served","cancelled"].map(s=>`<option ${s===o.status?"selected":""} value="${s}">${s}</option>`).join("")}</select></div>
-      <div class="order-actions">
-        <button class="primary" onclick="updateStatus('${o.id}')">Update status</button>
-        <button class="served-btn" onclick="markServed('${o.id}')">✓ Served</button>
-      </div>
-    </article>`;
-  }).join("");
-}
-async function updateStatus(id) {
-  const status=$("status-"+id).value;
-  const {error}=await db.from("orders").update({status}).eq("id",id).eq("restaurant_id",restaurantId);
-  if(error){notify("Status update failed: "+error.message,"error");return;}
-  notify("Order status updated.");
-  await loadOrders();
-}
-async function markServed(id) {
-  if(!confirm("Mark this order as served? It will disappear from the active dashboard, but the record will remain in the database.")) return;
-  const {error}=await db.from("orders").update({status:"served"}).eq("id",id).eq("restaurant_id",restaurantId);
-  if(error){notify("Could not mark order served: "+error.message,"error");return;}
-  notify("Order marked served and removed from the active list.");
-  await loadOrders();
-}
-function subscribeOrders() {
-  if(channel)db.removeChannel(channel);
-  channel=db.channel("orders-"+restaurantId)
-    .on("postgres_changes",{event:"*",schema:"public",table:"orders",filter:"restaurant_id=eq."+restaurantId},loadOrders)
-    .subscribe();
-}
-async function logout() {
-  if(channel){await db.removeChannel(channel);channel=null;}
-  await db.auth.signOut();
-  $("dashboard").classList.add("hidden");
-  $("loginPanel").classList.remove("hidden");
-}
+function imageFallback(img){img.onerror=null;img.style.display="none";const label=img.parentElement?.querySelector(".photo-label");if(label)label.textContent="Photo coming soon"}
+function renderMenu(){const list=menuItems.filter(x=>activeCategory==="All"||(x.category||"Popular")===activeCategory);if(!list.length){$("menu").innerHTML="<p>No items in this category yet.</p>";return}$("menu").innerHTML=list.map((item,index)=>{const src=imageFor(item);return '<article class="card" style="animation-delay:'+Math.min(index*35,250)+'ms"><div class="photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(item.name)+'" onerror="imageFallback(this)">':'<div style="height:100%;display:grid;place-items:center;color:#777d75;font-size:12px">Photo coming soon</div>')+'<span class="photo-label">'+esc(item.category||"Popular")+'</span></div><div class="card-body"><h3>'+esc(item.name)+'</h3><div class="desc">Freshly prepared · Made to order</div><div class="card-foot"><span class="price">'+money(item.price)+'</span><button class="add" aria-label="Add '+esc(item.name)+'" onclick="addItem(\''+item.id+'\')">+</button></div></div></article>'}).join("")}
+function addItem(id){const item=menuItems.find(x=>x.id===id);if(!item)return;if(!cart[id])cart[id]={item,quantity:0};if(cart[id].quantity<50)cart[id].quantity++;renderCart()}
+function changeQty(id,delta){if(!cart[id])return;cart[id].quantity+=delta;if(cart[id].quantity<=0)delete cart[id];renderCart()}
+function cartTotal(){return Object.values(cart).reduce((s,x)=>s+Number(x.item.price)*x.quantity,0)}
+function cartCount(){return Object.values(cart).reduce((s,x)=>s+x.quantity,0)}
+function renderCart(){const entries=Object.values(cart);$("bottomCart").classList.toggle("hidden",!entries.length);$("bottomTotal").textContent=money(cartTotal());$("bottomCount").textContent=cartCount()+" items";$("cartTotal").textContent=money(cartTotal());$("cartRows").innerHTML=entries.map(({item,quantity})=>'<div class="cart-row"><div><strong>'+esc(item.name)+'</strong><div class="muted">'+money(item.price)+' each</div></div><div class="qty"><button onclick="changeQty(\''+item.id+'\',-1)">−</button><strong>'+quantity+'</strong><button onclick="changeQty(\''+item.id+'\',1)">+</button></div></div>').join("")}
+function openCart(){$("cartPanel").classList.remove("hidden");$("cartPanel").scrollIntoView({behavior:"smooth",block:"start"})}
+function closeCart(){$("cartPanel").classList.add("hidden");window.scrollTo({top:0,behavior:"smooth"})}
+async function submitOrder(){const name=$("customerName").value.trim(),phone=$("customerPhone").value.trim(),entries=Object.values(cart);if(!name)return notify("Please enter your name.","error");if(!entries.length)return notify("Please add food to your cart first.","error");if(!tableId||!restaurantId)return notify("Invalid QR code.","error");const btn=$("submitBtn");btn.disabled=true;btn.textContent="Sending order...";try{const {data,error}=await db.rpc("create_order",{p_restaurant_id:restaurantId,p_table_id:tableId,p_customer_name:name,p_customer_phone:phone||null,p_items:entries.map(x=>({id:x.item.id,quantity:x.quantity}))});if(error)throw error;const total=cartTotal();$("confirmationCode").textContent="#"+shortCode(data);$("confirmationTotal").textContent="Order total: "+money(total);$("confirmationTable").textContent="Table "+tableNumber;cart={};renderCart();$("cartPanel").classList.add("hidden");$("confirmation").classList.remove("hidden");$("confirmation").scrollIntoView({behavior:"smooth"})}catch(e){notify("Order could not be placed: "+e.message,"error")}finally{btn.disabled=false;btn.textContent="Place my order →"}}
+function newOrder(){$("confirmation").classList.add("hidden");$("customerName").value="";$("customerPhone").value="";window.scrollTo({top:0,behavior:"smooth"})}
+/* Staff dashboard */
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();const {error}=await db.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error){notify("Login failed: "+error.message,"error");return}await checkSession()});
+async function checkSession(){const {data}=await db.auth.getSession();if(data.session){$("loginPanel").classList.add("hidden");$("dashboard").classList.remove("hidden");await loadOrders();subscribeOrders()}}
+async function loadOrders(){$("orders").textContent="Loading orders...";const {data:orders,error}=await db.from("orders").select("id,order_code,table_id,customer_name,customer_phone,status,total,created_at").eq("restaurant_id",restaurantId).order("created_at",{ascending:false}).limit(100);if(error){$("orders").textContent="Orders could not load.";notify(error.message,"error");return}const activeOrders=(orders||[]).filter(o=>!["served","cancelled"].includes(String(o.status||"").toLowerCase()));if(!activeOrders.length){$("orders").textContent="No active orders. Served and cancelled orders are hidden.";return}const {data:tables}=await db.from("restaurant_tables").select("id,table_number").eq("restaurant_id",restaurantId);const {data:items,error:itemError}=await db.from("order_items").select("order_id,item_name,quantity,unit_price").in("order_id",activeOrders.map(o=>o.id));if(itemError){notify(itemError.message,"error");return}$("orders").innerHTML=activeOrders.map(o=>{const table=(tables||[]).find(t=>t.id===o.table_id),code=o.order_code||shortCode(o.id);return '<article class="order"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">Order #'+esc(code)+'</div><h2 style="font-size:23px">Table '+esc(table?String(table.table_number).replace(/^0+/,"")||"1":"?")+'</h2></div><span class="muted">'+esc(new Date(o.created_at).toLocaleTimeString())+'</span></div><p><strong>'+esc(o.customer_name)+'</strong> · '+esc(o.customer_phone||"No phone")+'</p>'+ (items||[]).filter(i=>i.order_id===o.id).map(i=>{const src=imageFor({name:i.item_name});return '<div class="order-item"><div class="order-item-photo">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(i.item_name)+'" onerror="imageFallback(this)">':'')+'</div><div class="order-item-info"><strong>'+esc(i.item_name)+' × '+i.quantity+'</strong><span class="muted">'+money(i.unit_price)+' each</span></div><span class="order-item-price">'+money(i.unit_price*i.quantity)+'</span></div>'}).join("")+'<div class="total-row"><span>Total</span><span>'+money(o.total)+'</span></div><div class="field"><label>Order status</label><select id="status-'+o.id+'">'+["new","accepted","preparing","ready","served","cancelled"].map(s=>'<option '+(s===o.status?"selected":"")+' value="'+s+'">'+s+"</option>").join("")+'</select></div><div class="order-actions"><button class="primary" onclick="updateStatus(\''+o.id+'\')">Update status</button><button class="served-btn" onclick="markServed(\''+o.id+'\')">✓ Served</button></div></article>'}).join("")}
+async function updateStatus(id){const status=$("status-"+id).value;const {error}=await db.from("orders").update({status}).eq("id",id).eq("restaurant_id",restaurantId);if(error){notify("Status update failed: "+error.message,"error");return}notify("Order status updated.");await loadOrders()}
+async function markServed(id){if(!confirm("Mark this order as served? It will disappear from the active dashboard, but the record will remain in the database."))return;const {error}=await db.from("orders").update({status:"served"}).eq("id",id).eq("restaurant_id",restaurantId);if(error){notify("Could not mark order served: "+error.message,"error");return}notify("Order marked served and removed from the active list.");await loadOrders()}
+function subscribeOrders(){if(channel)db.removeChannel(channel);channel=db.channel("orders-"+restaurantId).on("postgres_changes",{event:"*",schema:"public",table:"orders",filter:"restaurant_id=eq."+restaurantId},loadOrders).subscribe()}
+async function logout(){if(channel){await db.removeChannel(channel);channel=null}await db.auth.signOut();$("dashboard").classList.add("hidden");$("loginPanel").classList.remove("hidden")}
 init();
-</script>
-</body>
-</html>
+</script></body></html>
