@@ -70,6 +70,15 @@ h2{font-family:Georgia,serif;font-size:29px;letter-spacing:-.5px;margin:0}
 .order-code{font-size:35px;font-weight:900;letter-spacing:3px;margin:14px 0}
 .order{border:1px solid var(--line);border-radius:13px;padding:15px;margin:12px 0;background:white}
 .order select{padding:9px;border:1px solid var(--line);border-radius:8px}
+.order-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.order-item-photo{width:54px;height:54px;flex:0 0 54px;border-radius:10px;overflow:hidden;background:#ebe8dd}
+.order-item-photo img{width:100%;height:100%;object-fit:cover}
+.order-item-info{flex:1;min-width:0}
+.order-item-info strong{display:block;overflow-wrap:anywhere}
+.order-item-price{white-space:nowrap;font-weight:800}
+.order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.served-btn{border:0;background:#246b4b;color:white;border-radius:10px;padding:11px 14px;font-weight:800}
+@media(max-width:420px){.order-item-photo{width:46px;height:46px;flex-basis:46px}.order-item-price{font-size:12px}}
 footer{text-align:center;padding:30px 12px;color:var(--muted);font-size:12px}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.photo{height:155px}}
@@ -277,9 +286,29 @@ function setCategory(c) {
   renderCategories();
   renderMenu();
 }
+// Image filenames live in the GitHub images/ folder.
+// Known names can use a custom filename; all other items default to <item-name-without-spaces>.jpg.
+const IMAGE_OVERRIDES = {
+  coffee:"ccoffee.jpg", coldcoffee:"coldcoffee.jpg", tea:"tea.jpg",
+  masalachai:"masala-chai.jpg", cappuccino:"cappuccino.jpg", latte:"latte.jpg",
+  espresso:"espresso.jpg", burger:"burger.jpg", cheeseburger:"cheeseburger.jpg",
+  pizza:"pizza.jpg", margheritapizza:"margherita-pizza.jpg", sandwich:"sandwich.jpg",
+  fries:"fries.jpg", frenchfries:"fries.jpg", pasta:"pasta.jpg", noodles:"noodles.jpg",
+  maggi:"maggi.jpg", momos:"momos.jpg", dosa:"dosa.jpg", idli:"idli.jpg",
+  samosa:"samosa.jpg", vadapav:"vada-pav.jpg", pavbhaji:"pav-bhaji.jpg",
+  poha:"poha.jpg", biryani:"biryani.jpg", thali:"thali.jpg", cake:"cake.jpg",
+  brownie:"brownie.jpg", icecream:"ice-cream.jpg", milkshake:"milkshake.jpg",
+  lemonade:"lemonade.jpg", water:"water.jpg", mineralwater:"water.jpg"
+};
 function imageFor(item) {
-  const filename=item.image_path || slug(item.name)+".jpg";
-  return "images/"+filename;
+  const explicit = String(item?.image_path || "").trim().replace(/^images\//, "");
+  const key = slug(item?.name || item?.item_name || "");
+  const filename = explicit || IMAGE_OVERRIDES[key] || (key ? key + ".jpg" : "");
+  return filename ? "images/" + filename : "";
+}
+function imageFallback(img) {
+  img.onerror = null;
+  img.src = "https://placehold.co/600x400/f0eee4/536557?text=Photo+coming+soon";
 }
 function renderMenu() {
   const list=menuItems.filter(x=>activeCategory==="All"||(x.category||"Popular")===activeCategory);
@@ -291,7 +320,7 @@ function renderMenu() {
     <article class="card" style="animation-delay:${Math.min(index*35,250)}ms">
       <div class="photo">
         <img loading="lazy" src="${esc(imageFor(item))}" alt="${esc(item.name)}"
-          onerror="this.onerror=null;this.src='https://placehold.co/600x400/f0eee4/536557?text=Fresh+Food'">
+          onerror="imageFallback(this)">
         <span class="photo-label">${esc(item.category||"Popular")}</span>
       </div>
       <div class="card-body">
@@ -413,16 +442,18 @@ async function loadOrders() {
     .eq("restaurant_id",restaurantId)
     .order("created_at",{ascending:false}).limit(100);
   if(error){$("orders").textContent="Orders could not load.";notify(error.message,"error");return;}
-  if(!orders.length){$("orders").textContent="No orders yet.";return;}
+  // Served/cancelled orders remain in Supabase but are hidden from the active staff list.
+  const activeOrders = (orders || []).filter(o => !["served", "cancelled"].includes(String(o.status || "").toLowerCase()));
+  if(!activeOrders.length){$("orders").textContent="No active orders. Served and cancelled orders are hidden.";return;}
 
   const {data:tables}=await db.from("restaurant_tables")
     .select("id,table_number").eq("restaurant_id",restaurantId);
-  const {data:items,itemError}=await db.from("order_items")
+  const {data:items,error:itemError}=await db.from("order_items")
     .select("order_id,item_name,quantity,unit_price")
-    .in("order_id",orders.map(o=>o.id));
+    .in("order_id",activeOrders.map(o=>o.id));
   if(itemError){notify(itemError.message,"error");return;}
 
-  $("orders").innerHTML=orders.map(o=>{
+  $("orders").innerHTML=activeOrders.map(o=>{
     const table=(tables||[]).find(t=>t.id===o.table_id);
     const code=o.order_code||shortCode(o.id);
     return `<article class="order">
@@ -431,10 +462,17 @@ async function loadOrders() {
         <span class="muted">${esc(new Date(o.created_at).toLocaleTimeString())}</span>
       </div>
       <p><strong>${esc(o.customer_name)}</strong> · ${esc(o.customer_phone||"No phone")}</p>
-      ${(items||[]).filter(i=>i.order_id===o.id).map(i=>`<div class="cart-row"><span>${esc(i.item_name)} × ${i.quantity}</span><strong>${money(i.unit_price*i.quantity)}</strong></div>`).join("")}
+      ${(items||[]).filter(i=>i.order_id===o.id).map(i=>`<div class="order-item">
+        <div class="order-item-photo"><img loading="lazy" src="${esc(imageFor({name:i.item_name}))}" alt="${esc(i.item_name)}" onerror="imageFallback(this)"></div>
+        <div class="order-item-info"><strong>${esc(i.item_name)} × ${i.quantity}</strong><span class="muted">${money(i.unit_price)} each</span></div>
+        <span class="order-item-price">${money(i.unit_price*i.quantity)}</span>
+      </div>`).join("")}
       <div class="total-row"><span>Total</span><span>${money(o.total)}</span></div>
       <div class="field"><label>Order status</label><select id="status-${o.id}">${["new","accepted","preparing","ready","served","cancelled"].map(s=>`<option ${s===o.status?"selected":""} value="${s}">${s}</option>`).join("")}</select></div>
-      <button class="primary" onclick="updateStatus('${o.id}')">Update status</button>
+      <div class="order-actions">
+        <button class="primary" onclick="updateStatus('${o.id}')">Update status</button>
+        <button class="served-btn" onclick="markServed('${o.id}')">✓ Served</button>
+      </div>
     </article>`;
   }).join("");
 }
@@ -443,6 +481,13 @@ async function updateStatus(id) {
   const {error}=await db.from("orders").update({status}).eq("id",id).eq("restaurant_id",restaurantId);
   if(error){notify("Status update failed: "+error.message,"error");return;}
   notify("Order status updated.");
+  await loadOrders();
+}
+async function markServed(id) {
+  if(!confirm("Mark this order as served? It will disappear from the active dashboard, but the record will remain in the database.")) return;
+  const {error}=await db.from("orders").update({status:"served"}).eq("id",id).eq("restaurant_id",restaurantId);
+  if(error){notify("Could not mark order served: "+error.message,"error");return;}
+  notify("Order marked served and removed from the active list.");
   await loadOrders();
 }
 function subscribeOrders() {
