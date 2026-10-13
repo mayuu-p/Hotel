@@ -122,7 +122,7 @@ footer{text-align:center;padding:30px 12px;color:var(--muted);font-size:12px}
         <h1>A little taste of happiness.</h1>
         <p>Explore our menu, choose your favourites and order right from your table.</p>
       </div>
-      <img src="images/coldcoffee.jpg" alt="" onerror="this.style.display='none'">
+      <img src="coldcoffee.jpg" alt="" onerror="this.style.display='none'">
     </div>
 
     <div class="section-head">
@@ -301,25 +301,44 @@ const IMAGE_OVERRIDES = {
   lemonade:"lemonade.jpg", water:"water.jpg", mineralwater:"water.jpg"
 };
 function imageFor(item) {
-  const name = String(item?.name || item?.item_name || "food").trim().toLowerCase();
-  // Use verified-style direct image CDN links; ignore stale image_path values that may point to missing files.
-  const photos = [
-    "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=80"
-  ];
-  const keywordMap = [
-    ["pizza", 1], ["burger", 2], ["sandwich", 2], ["pasta", 3], ["noodle", 3],
-    ["biryani", 4], ["rice", 4], ["chicken", 4], ["fries", 2], ["potato", 2],
-    ["salad", 5], ["bowl", 5], ["cake", 0], ["brownie", 0], ["ice cream", 0],
-    ["dessert", 0], ["coffee", 5], ["tea", 5], ["juice", 5], ["drink", 5]
-  ];
-  const match = keywordMap.find(([word]) => name.includes(word));
-  const index = match ? match[1] : [...name].reduce((n, ch) => n + ch.charCodeAt(0), 0) % photos.length;
-  return photos[index];
+  const name = String(item?.name || item?.item_name || "food")
+    .toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // Each menu item maps to its own uploaded dish photo.
+  const exact = {
+    alfredopasta:"alfredopasta.jpg", bakedpasta:"bakedpasta.jpg",
+    biryani:"biryani.jpg", brownie:"brownie.jpg", burger:"burger.jpg",
+    butternaan:"butternaan.jpg", cappuccino:"cappuccino.jpg",
+    coffee:"coffee.jpg", ccoffee:"ccoffee.jpg", coldcoffee:"coldcoffee.jpg",
+    chocolatecoldcoffee:"chocolatecoldcoffee.jpg", cheeseballs:"cheeseballs.jpg",
+    cheeseburger:"cheeseburger.jpg", cheesefries:"cheesefries.jpg",
+    cheesesandwich:"cheesesandwich.jpg", chillipaneer:"chillipaneer.jpg",
+    chocolateshake:"chocolateshake.jpg", clubsandwich:"clubsandwich.jpg",
+    daltadka:"daltadka.jpg", farmhousepizza:"farmhousepizza.jpg",
+    frenchfries:"frenchfries.jpg", freshlimesoda:"freshlimesoda.jpg",
+    fries:"fries.jpg", gulabjamun:"gulabjamun.jpg", hotcoffee:"hotcoffee.jpg",
+    icecream:"ice-cream.jpg", vanillaicecream:"vanillaicecream.jpg",
+    jeerarice:"jeerarice.jpg", lemonade:"lemonade.jpg", mangoshake:"mangoshake.jpg",
+    margheritapizza:"margheritapizza.jpg", masalachai:"masalachai.jpg",
+    mineralwater:"mineralwater.jpg", mozzarellasticks:"mozzarellasticks.jpg",
+    onionrings:"onionrings.jpg", oreoshake:"oreoshake.jpg",
+    paneerburger:"paneerburger.jpg", paneerbuttermasala:"paneerbuttermasala.jpg",
+    paneersandwich:"paneersandwich.jpg", paneertikka:"paneertikka.jpg",
+    pasta:"pasta.jpg", periperifries:"periperifries.jpg", pestopasta:"pestopasta.jpg",
+    pizza:"pizza.jpg", potatowedges:"potatowedges.jpg",
+    redsaucepasta:"redsaucepasta.jpg", sandwich:"sandwich.jpg",
+    specialpizza:"specialpizza.jpg", springrolls:"springrolls.jpg",
+    strawberryshake:"strawberryshake.jpg", vegburger:"vegburger.jpg",
+    vegfriedrice:"vegfriedrice.jpg", veghakkanoodles:"veghakkanoodles.jpg",
+    vegmanchurian:"vegmanchurian.jpg", vegnuggets:"vegnuggets.jpg",
+    vegpakora:"vegpakora.jpg", vegpulao:"vegpulao.jpg",
+    vegsandwich:"vegsandwich.jpg", whitesaucepasta:"whitesaucepasta.jpg",
+    tea:"masalachai.jpg", chai:"masalachai.jpg", masala tea:"masalachai.jpg"
+  };
+
+  if (exact[name]) return exact[name];
+  // Only use a same-name image when that exact file exists in the image set.
+  return name + ".jpg";
 }
 function imageFallback(img) {
   if (!img.dataset.fallbackTried) {
