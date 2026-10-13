@@ -91,7 +91,7 @@ async function loadCustomerOrders(){
  if(!orders||!orders.length){box.innerHTML='<div class="order"><strong>No active orders yet</strong><p class="muted">Place an order and it will appear here.</p></div>';return}
  const {data:items,error:itemError}=await db.from("order_items").select("id,order_id,menu_item_id,item_name,quantity,unit_price").in("order_id",orders.map(o=>o.id));
  if(itemError){box.innerHTML='<p class="muted">Order items could not load: '+esc(itemError.message)+'</p>';return}
- await Promise.all(orders.map(async o=>{const r=await db.rpc("get_table_order_edit_status",{p_order_id:o.id,p_table_id:tableId});if(!r.error)customerEditStatus[o.id]=r.data||"none"}));
+ await Promise.all(orders.map(async o=>{const r=await db.from("order_edit_requests").select("status,approved_until").eq("order_id",o.id).eq("table_id",tableId).order("requested_at",{ascending:false}).limit(1).maybeSingle();if(!r.error){customerEditStatus[o.id]=r.data?.status||"none";customerApprovalUntil[o.id]=r.data?.approved_until?new Date(r.data.approved_until).getTime():0}}));
  const toolbar='<div class="orders-toolbar" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px"><div><div class="eyebrow">Live order tracking</div><p class="muted" style="margin:5px 0 0">Table '+esc(tableNumber)+' · Your food status updates live</p></div><button class="liquid-btn" onclick="backToMenu()"><span>← Back to menu</span></button></div>';
  box.innerHTML=toolbar+orders.map((o,index)=>{
   const accepted=o.accepted_at?new Date(o.accepted_at).getTime():null;
