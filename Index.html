@@ -1,0 +1,897 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <title>Restaurant QR Ordering</title>
+
+  <!-- Supabase JavaScript client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f4f8fb;
+      --surface: #ffffff;
+      --dark: #0f172a;
+      --muted: #64748b;
+      --primary: #0284c7;
+      --teal: #0d9488;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--dark);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 15px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      color: var(--dark);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 12px 0 6px;
+    }
+
+    header {
+      background: var(--dark);
+      color: white;
+      padding: 20px;
+    }
+
+    header .sub {
+      color: #cbd5e1;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    main {
+      width: min(1050px, 100%);
+      margin: auto;
+      padding: 18px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(270px, .8fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 5px 20px #0f172a08;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+
+    .muted { color: var(--muted); font-size: 13px; }
+    .hidden { display: none !important; }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+
+    .menu-item:last-child { border-bottom: 0; }
+
+    .price {
+      font-weight: 800;
+      margin-top: 5px;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .small-btn {
+      padding: 7px 11px;
+      border-radius: 8px;
+    }
+
+    .secondary {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .dark-btn { background: var(--dark); }
+    .danger { background: var(--danger); }
+
+    .full { width: 100%; margin-top: 12px; }
+
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .total {
+      font-size: 23px;
+      font-weight: 850;
+    }
+
+    .status {
+      display: inline-block;
+      border-radius: 20px;
+      padding: 5px 9px;
+      background: #e0f2fe;
+      color: #075985;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .order-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 12px;
+      background: white;
+    }
+
+    .order-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .actions button {
+      padding: 9px 11px;
+      font-size: 12px;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 10px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 13px;
+      margin-bottom: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    @media (max-width: 700px) {
+      .layout { grid-template-columns: 1fr; }
+      main { padding: 12px; }
+      header { padding: 17px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 id="brand" style="margin-bottom:0">Restaurant QR</h1>
+    <div class="sub" id="headerSub">Order directly from your table</div>
+  </header>
+
+  <main>
+    <div id="message" class="notice hidden" role="status"></div>
+
+    <!-- CUSTOMER PAGE -->
+    <section id="customerPage" class="hidden">
+      <div class="notice" id="tableInfo">Loading table...</div>
+
+      <div class="layout">
+        <section class="panel">
+          <h2>Our Menu</h2>
+          <p class="muted">Choose your favourite food.</p>
+          <div id="menuList">Loading menu...</div>
+        </section>
+
+        <aside>
+          <section class="panel">
+            <h2>Your Cart</h2>
+            <div id="cartList" class="muted">Your cart is empty.</div>
+            <div class="row-between" style="margin-top:16px">
+              <span>Total</span>
+              <span class="total" id="cartTotal">₹0.00</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Customer Details</h2>
+
+            <form id="orderForm">
+              <label for="customerName">Your name</label>
+              <input id="customerName" maxlength="100"
+                     autocomplete="name" required minlength="2">
+
+              <label for="customerPhone">Mobile number</label>
+              <input id="customerPhone" type="tel"
+                     maxlength="20" autocomplete="tel"
+                     placeholder="Enter mobile number" required>
+
+              <label for="notes">Special instructions (optional)</label>
+              <textarea id="notes" maxlength="500"
+                        rows="2"
+                        placeholder="Less spicy, no onion..."></textarea>
+
+              <button class="full" id="placeOrder" type="submit">
+                Place Order
+              </button>
+            </form>
+
+            <p class="muted" style="margin-top:12px">
+              Please review your items before placing the order.
+            </p>
+          </section>
+
+          <section id="customerReceipt" class="panel hidden"></section>
+        </aside>
+      </div>
+    </section>
+
+    <!-- STAFF LOGIN -->
+    <section id="staffLogin" class="panel hidden">
+      <h2>Staff Login</h2>
+      <p class="muted">Only authorized restaurant staff can continue.</p>
+
+      <form id="loginForm">
+        <label for="staffEmail">Email</label>
+        <input id="staffEmail" type="email" required
+               autocomplete="username">
+
+        <label for="staffPassword">Password</label>
+        <input id="staffPassword" type="password" required
+               autocomplete="current-password">
+
+        <button class="full" type="submit">Login to Dashboard</button>
+      </form>
+    </section>
+
+    <!-- STAFF DASHBOARD -->
+    <section id="staffPage" class="hidden">
+      <div class="row-between">
+        <div>
+          <h2>Live Orders</h2>
+          <p class="muted">New orders appear automatically.</p>
+        </div>
+        <button class="dark-btn" id="logoutBtn">Logout</button>
+      </div>
+
+      <div class="notice">
+        Keep this dashboard open for live updates and sound alerts.
+      </div>
+
+      <section class="panel">
+        <div class="row-between">
+          <h3>Restaurant Orders</h3>
+          <button class="secondary" id="refreshBtn">Refresh</button>
+        </div>
+        <div id="ordersList">Loading orders...</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // ==========================================
+    // 1. CONFIGURATION
+    // ==========================================
+
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+    const params = new URLSearchParams(location.search);
+    const RESTAURANT_ID = params.get("restaurant") || "";
+    const TABLE_ID = params.get("table") || "";
+    const IS_STAFF = params.get("staff") === "1";
+
+    const UUID_RE =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    const configReady =
+      SUPABASE_URL.startsWith("https://") &&
+      !SUPABASE_URL.includes("YOUR_") &&
+      SUPABASE_KEY.length > 20 &&
+      !SUPABASE_KEY.includes("YOUR_");
+
+    const db = configReady
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+      : null;
+
+    let menu = [];
+    let cart = {};
+    let liveChannel = null;
+    let knownOrderIds = new Set();
+    let soundEnabled = false;
+
+    const $ = id => document.getElementById(id);
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function money(paise) {
+      return "₹" + (Number(paise) / 100).toFixed(2);
+    }
+
+    function showMessage(text, isError = false) {
+      const box = $("message");
+      box.textContent = text;
+      box.classList.remove("hidden", "error");
+      if (isError) box.classList.add("error");
+    }
+
+    function hideMessage() {
+      $("message").classList.add("hidden");
+    }
+
+    function showOnly(id) {
+      ["customerPage", "staffLogin", "staffPage"].forEach(page => {
+        $(page).classList.toggle("hidden", page !== id);
+      });
+    }
+
+    function checkConfig() {
+      if (!configReady) {
+        showMessage(
+          "Setup required: add your Supabase URL and publishable key in the HTML configuration.",
+          true
+        );
+        return false;
+      }
+
+      if (!RESTAURANT_ID || !UUID_RE.test(RESTAURANT_ID)) {
+        showMessage("Restaurant ID is missing or invalid.", true);
+        return false;
+      }
+
+      return true;
+    }
+
+    // ==========================================
+    // 2. CUSTOMER MENU
+    // ==========================================
+
+    async function initCustomer() {
+      showOnly("customerPage");
+
+      if (!checkConfig()) return;
+
+      if (!TABLE_ID || !UUID_RE.test(TABLE_ID)) {
+        showMessage("Invalid table link. Please scan the correct QR code.", true);
+        return;
+      }
+
+      const { data: restaurant, error: restaurantError } =
+        await db.from("restaurants")
+          .select("id,name")
+          .eq("id", RESTAURANT_ID)
+          .maybeSingle();
+
+      if (restaurantError || !restaurant) {
+        showMessage("Restaurant unavailable. Please contact staff.", true);
+        return;
+      }
+
+      $("brand").textContent = restaurant.name;
+      $("tableInfo").textContent =
+        "Restaurant: " + restaurant.name +
+        " • Table linked successfully";
+
+      const { data, error } = await db.from("menu_items")
+        .select("id,name,description,price_paise,category")
+        .eq("restaurant_id", RESTAURANT_ID)
+        .eq("available", true)
+        .order("category")
+        .order("name");
+
+      if (error) {
+        showMessage("Menu could not load. Please try again.", true);
+        return;
+      }
+
+      menu = data || [];
+      renderMenu();
+      renderCart();
+    }
+
+    function renderMenu() {
+      if (!menu.length) {
+        $("menuList").textContent = "No food items available right now.";
+        return;
+      }
+
+      $("menuList").innerHTML = menu.map(item => `
+        <div class="menu-item">
+          <div>
+            <div class="muted">${escapeHTML(item.category)}</div>
+            <strong>${escapeHTML(item.name)}</strong>
+            <div class="muted">${escapeHTML(item.description || "")}</div>
+            <div class="price">${money(item.price_paise)}</div>
+          </div>
+          <button class="small-btn" data-add="${item.id}">
+            Add +
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function renderCart() {
+      const entries = menu.filter(item => (cart[item.id] || 0) > 0);
+      let total = 0;
+
+      if (!entries.length) {
+        $("cartList").textContent = "Your cart is empty.";
+      } else {
+        $("cartList").innerHTML = entries.map(item => {
+          const qty = cart[item.id];
+          total += Number(item.price_paise) * qty;
+
+          return `
+            <div class="order-line">
+              <div>
+                <strong>${escapeHTML(item.name)}</strong>
+                <div class="muted">${money(item.price_paise)} each</div>
+              </div>
+              <div class="qty-controls">
+                <button class="small-btn secondary"
+                        data-minus="${item.id}">−</button>
+                <strong>${qty}</strong>
+                <button class="small-btn"
+                        data-add="${item.id}">+</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      $("cartTotal").textContent = money(total);
+    }
+
+    document.addEventListener("click", event => {
+      const addButton = event.target.closest("[data-add]");
+      const minusButton = event.target.closest("[data-minus]");
+
+      if (addButton) {
+        const id = addButton.dataset.add;
+        const item = menu.find(entry => entry.id === id);
+        if (!item || !item.available) return;
+
+        cart[id] = Math.min(20, (cart[id] || 0) + 1);
+        renderCart();
+      }
+
+      if (minusButton) {
+        const id = minusButton.dataset.minus;
+        cart[id] = Math.max(0, (cart[id] || 0) - 1);
+        if (!cart[id]) delete cart[id];
+        renderCart();
+      }
+    });
+
+    $("orderForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      hideMessage();
+
+      if (!checkConfig() || !TABLE_ID || !UUID_RE.test(TABLE_ID)) return;
+
+      const entries = Object.entries(cart)
+        .filter(([id, qty]) =>
+          menu.some(item => item.id === id && item.available) &&
+          Number.isInteger(qty) && qty > 0 && qty <= 20
+        );
+
+      if (!entries.length) {
+        showMessage("Please add at least one item to your cart.", true);
+        return;
+      }
+
+      const button = $("placeOrder");
+      button.disabled = true;
+      button.textContent = "Submitting...";
+
+      try {
+        // Prices are recalculated by the database function.
+        const payload = entries.map(([id, qty]) => ({ id, qty }));
+
+        const { data: orderId, error } = await db.rpc("create_order", {
+          p_restaurant_id: RESTAURANT_ID,
+          p_table_id: TABLE_ID,
+          p_customer_name: $("customerName").value.trim(),
+          p_customer_phone: $("customerPhone").value.trim(),
+          p_notes: $("notes").value.trim(),
+          p_items: payload
+        });
+
+        if (error) throw error;
+
+        $("customerReceipt").classList.remove("hidden");
+        $("customerReceipt").innerHTML = `
+          <h3>Order submitted!</h3>
+          <p>Your order reference:</p>
+          <strong>${escapeHTML(orderId)}</strong>
+          <p class="muted">Please wait for staff confirmation.</p>
+        `;
+
+        cart = {};
+        renderCart();
+        $("notes").value = "";
+        showMessage("Order saved successfully. Reference: " + orderId);
+      } catch (error) {
+        console.error(error);
+        showMessage(
+          "Order failed. Please check your connection and try again.",
+          true
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Place Order";
+      }
+    });
+
+    // ==========================================
+    // 3. STAFF LOGIN
+    // ==========================================
+
+    $("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      hideMessage();
+
+      if (!checkConfig()) return;
+
+      const { error } = await db.auth.signInWithPassword({
+        email: $("staffEmail").value.trim(),
+        password: $("staffPassword").value
+      });
+
+      if (error) {
+        showMessage("Login failed. Check your credentials.", true);
+        return;
+      }
+
+      soundEnabled = true;
+      await initStaff();
+    });
+
+    // ==========================================
+    // 4. STAFF LIVE DASHBOARD
+    // ==========================================
+
+    async function initStaff() {
+      showOnly("staffPage");
+
+      if (!checkConfig()) return;
+
+      const { data: membership, error: membershipError } =
+        await db.from("staff_members")
+          .select("role")
+          .eq("restaurant_id", RESTAURANT_ID)
+          .maybeSingle();
+
+      // The membership table intentionally has no public read policy.
+      // Do not use this query to authorize access. The RLS policies on
+      // orders enforce authorization on the server.
+      // Membership is verified below by successfully loading staff data.
+      void membership;
+      void membershipError;
+
+      const { data: restaurant } = await db.from("restaurants")
+        .select("name")
+        .eq("id", RESTAURANT_ID)
+        .maybeSingle();
+
+      if (restaurant) {
+        $("brand").textContent = restaurant.name + " • Staff";
+      }
+
+      await loadOrders();
+      subscribeToOrders();
+    }
+
+    async function loadOrders() {
+      $("ordersList").textContent = "Loading orders...";
+
+      const { data: orders, error } = await db.from("orders")
+        .select("*")
+        .eq("restaurant_id", RESTAURANT_ID)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        $("ordersList").textContent =
+          "Unable to load orders. Check staff access and database policies.";
+        console.error(error);
+        return;
+      }
+
+      const { data: tables, error: tableError } =
+        await db.from("restaurant_tables")
+          .select("id,table_number")
+          .eq("restaurant_id", RESTAURANT_ID);
+
+      if (tableError) {
+        $("ordersList").textContent = "Unable to load table details.";
+        return;
+      }
+
+      const tableMap = Object.fromEntries(
+        (tables || []).map(table => [table.id, table.table_number])
+      );
+
+      if (!orders || !orders.length) {
+        $("ordersList").textContent = "No orders yet. Waiting for customers...";
+        return;
+      }
+
+      const ids = orders.map(order => order.id);
+
+      const { data: items, error: itemError } =
+        await db.from("order_items")
+          .select("order_id,item_name,unit_price_paise,quantity")
+          .in("order_id", ids);
+
+      if (itemError) {
+        $("ordersList").textContent = "Unable to load order items.";
+        return;
+      }
+
+      const itemMap = {};
+      (items || []).forEach(item => {
+        (itemMap[item.order_id] ||= []).push(item);
+      });
+
+      $("ordersList").innerHTML = orders.map(order => {
+        const lines = itemMap[order.id] || [];
+        const status = order.status;
+
+        const actions = {
+          pending: [["Accept", "accepted"], ["Cancel", "cancelled"]],
+          accepted: [["Preparing", "preparing"]],
+          preparing: [["Ready", "ready"]],
+          ready: [["Served", "served"]]
+        }[status] || [];
+
+        return `
+          <article class="order-card">
+            <div class="row-between">
+              <strong>Order ${escapeHTML(order.id.slice(0, 8))}</strong>
+              <span class="status">${escapeHTML(status)}</span>
+            </div>
+
+            <p class="muted">
+              Table ${escapeHTML(tableMap[order.table_id] || "—")}
+              • ${escapeHTML(new Date(order.created_at).toLocaleString())}
+            </p>
+
+            <strong>${escapeHTML(order.customer_name)}</strong>
+            <div class="muted">${escapeHTML(order.customer_phone)}</div>
+
+            <div style="margin-top:12px">
+              ${lines.map(item => `
+                <div class="order-line">
+                  <span>${escapeHTML(item.item_name)} × ${item.quantity}</span>
+                  <strong>${money(item.unit_price_paise * item.quantity)}</strong>
+                </div>
+              `).join("")}
+            </div>
+
+            ${order.notes ? `
+              <p class="notice">Note: ${escapeHTML(order.notes)}</p>
+            ` : ""}
+
+            <div class="row-between" style="margin-top:12px">
+              <span>Total</span>
+              <span class="total">${money(order.total_paise)}</span>
+            </div>
+
+            <div class="actions">
+              ${actions.map(([label, next]) => `
+                <button data-status-id="${order.id}"
+                        data-next-status="${next}">
+                  ${label}
+                </button>
+              `).join("")}
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      orders.forEach(order => knownOrderIds.add(order.id));
+    }
+
+    async function updateOrderStatus(id, status) {
+      const allowed = [
+        "accepted", "preparing", "ready", "served", "cancelled"
+      ];
+
+      if (!allowed.includes(status)) return;
+
+      const { error } = await db.from("orders")
+        .update({ status })
+        .eq("id", id)
+        .eq("restaurant_id", RESTAURANT_ID);
+
+      if (error) {
+        showMessage("Status update failed. Check permissions.", true);
+        console.error(error);
+        return;
+      }
+
+      await loadOrders();
+    }
+
+    document.addEventListener("click", event => {
+      const button = event.target.closest("[data-status-id]");
+      if (!button) return;
+
+      updateOrderStatus(
+        button.dataset.statusId,
+        button.dataset.nextStatus
+      );
+    });
+
+    function playAlert() {
+      try {
+        const AudioContextClass =
+          window.AudioContext || window.webkitAudioContext;
+
+        if (!AudioContextClass) return;
+
+        const audio = new AudioContextClass();
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+
+        oscillator.frequency.value = 880;
+        gain.gain.value = 0.08;
+
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+
+        oscillator.start();
+        oscillator.stop(audio.currentTime + 0.18);
+        oscillator.onended = () => audio.close();
+      } catch (error) {
+        console.warn("Sound alert unavailable", error);
+      }
+    }
+
+    function subscribeToOrders() {
+      if (liveChannel) {
+        db.removeChannel(liveChannel);
+        liveChannel = null;
+      }
+
+      liveChannel = db.channel("orders-" + RESTAURANT_ID)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "orders",
+            filter: "restaurant_id=eq." + RESTAURANT_ID
+          },
+          payload => {
+            if (
+              payload.eventType === "INSERT" &&
+              !knownOrderIds.has(payload.new.id)
+            ) {
+              playAlert();
+              showMessage("New order received!");
+            }
+
+            loadOrders();
+          }
+        )
+        .subscribe(status => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            showMessage(
+              "Live connection interrupted. Use Refresh to check orders.",
+              true
+            );
+          }
+        });
+    }
+
+    $("refreshBtn").addEventListener("click", loadOrders);
+
+    $("logoutBtn").addEventListener("click", async () => {
+      if (liveChannel) await db.removeChannel(liveChannel);
+      liveChannel = null;
+      await db.auth.signOut();
+      showOnly("staffLogin");
+      showMessage("You have logged out.");
+    });
+
+    // ==========================================
+    // 5. START APPLICATION
+    // ==========================================
+
+    async function start() {
+      if (!configReady) {
+        showMessage(
+          "Configure the Supabase URL and publishable key in this file.",
+          true
+        );
+        return;
+      }
+
+      if (IS_STAFF) {
+        showOnly("staffLogin");
+
+        if (!RESTAURANT_ID || !UUID_RE.test(RESTAURANT_ID)) {
+          showMessage("Invalid restaurant link.", true);
+          return;
+        }
+
+        const { data: { session } } = await db.auth.getSession();
+
+        if (session) {
+          await initStaff();
+        }
+      } else {
+        await initCustomer();
+      }
+    }
+
+    start();
+  </script>
+</body>
+</html>
