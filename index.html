@@ -89,6 +89,35 @@ main{width:100%;max-width:1720px;padding-left:clamp(12px,2.2vw,34px);padding-rig
  .staff-order-grid .order-items-grid .order-item-price{grid-column:2;justify-self:start;font-size:11px}
  .staff-order-grid .order-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+/* Customer order cards: improve readability and food photo sizing */
+.orders-page #customerOrdersList>.order{padding:clamp(20px,2.5vw,34px)!important;border-radius:20px}
+.orders-page #customerOrdersList>.order .section-head h2{font-size:clamp(24px,2vw,30px)!important;line-height:1.15}
+.orders-page #customerOrdersList>.order .eyebrow{font-size:12px;letter-spacing:1.7px}
+.orders-page #customerOrdersList>.order .order-items-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px!important;margin:16px 0}
+.orders-page #customerOrdersList>.order .order-items-grid>.order-item{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:11px;border-radius:14px;min-height:82px}
+.orders-page #customerOrdersList>.order .order-items-grid .order-item-photo{width:58px;height:58px;flex-basis:58px;border-radius:12px}
+.orders-page #customerOrdersList>.order .order-items-grid .order-item-info strong{font-size:14px;line-height:1.35}
+.orders-page #customerOrdersList>.order .order-items-grid .order-item-info .muted{display:block;font-size:12px;line-height:1.4;margin-top:4px}
+.orders-page #customerOrdersList>.order .order-items-grid .order-item-price{grid-column:2;justify-self:start;font-size:14px;line-height:1.3;margin-top:2px}
+.orders-page #customerOrdersList>.order .total-row{font-size:clamp(19px,1.6vw,23px);padding:20px 0}
+.orders-page #customerOrdersList>.order .order-status-chip,.orders-page #customerOrdersList>.order .timer-chip{font-size:13px;padding:8px 12px}
+.orders-page #customerOrdersList>.order .liquid-btn{padding:13px 18px;font-size:14px}
+@media(min-width:651px) and (max-width:1050px){
+ .orders-page #customerOrdersList>.order .order-items-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .orders-page #customerOrdersList>.order .order-items-grid>.order-item{grid-template-columns:52px minmax(0,1fr);padding:10px}
+ .orders-page #customerOrdersList>.order .order-items-grid .order-item-photo{width:52px;height:52px;flex-basis:52px}
+}
+@media(max-width:650px){
+ .orders-page #customerOrdersList>.order{padding:17px!important}
+ .orders-page #customerOrdersList>.order .order-items-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+ .orders-page #customerOrdersList>.order .order-items-grid>.order-item{grid-template-columns:42px minmax(0,1fr);gap:7px;padding:8px;min-height:70px}
+ .orders-page #customerOrdersList>.order .order-items-grid .order-item-photo{width:42px;height:42px;flex-basis:42px}
+ .orders-page #customerOrdersList>.order .order-items-grid .order-item-info strong{font-size:12px}
+ .orders-page #customerOrdersList>.order .order-items-grid .order-item-info .muted{font-size:11px}
+ .orders-page #customerOrdersList>.order .order-items-grid .order-item-price{font-size:12px}
+ .orders-page #customerOrdersList>.order .total-row{font-size:19px;padding:16px 0}
+}
 </style>
 </head>
 <body>
