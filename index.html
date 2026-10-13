@@ -267,6 +267,16 @@ function renderTableLinks(){
 }
 async function copyTableLink(id){const url=tableOrderUrl(id);try{await navigator.clipboard.writeText(url);notify("Table order link copied.")}catch(e){window.prompt("Copy this table order link:",url)}}
 async function copyAllTableLinks(){const all=TABLE_LINK_IDS.map(([num,id])=>"Table "+Number(num)+": "+tableOrderUrl(id)).join("\\n");try{await navigator.clipboard.writeText(all);notify("All 10 table links copied.")}catch(e){window.prompt("Copy all table links:",all)}}
+const staffServeDelays={};
+function itemNeedsPreparation(orderItem){
+ const name=String(orderItem.item_name||"").toLowerCase();
+ const menu=menuItems.find(m=>String(m.name||"").toLowerCase()===name);
+ const category=String(menu?.category||"").toLowerCase();
+ const readyKeywords=/\b(water|mineral water|bottled water|soda|soft drink|coke|coca cola|pepsi|sprite|fanta|thums up|7up|packaged juice|juice box|canned drink|energy drink|bottled drink)\b/;
+ if(readyKeywords.test(name))return false;
+ if(/\b(water|soft drinks|packaged drinks|bottled drinks)\b/.test(category))return false;
+ return true;
+}
 async function loadOrders(){
  $("orders").classList.add("is-refreshing");
  const {data:orders,error}=await db.from("orders").select("id,order_code,table_id,customer_name,customer_phone,status,total,created_at,accepted_at,edit_count").eq("restaurant_id",restaurantId).order("created_at",{ascending:false}).limit(100);
@@ -277,6 +287,7 @@ async function loadOrders(){
  const {data:tables}=await db.from("restaurant_tables").select("id,table_number").eq("restaurant_id",restaurantId);
  const {data:items,error:itemError}=await db.from("order_items").select("order_id,item_name,quantity,unit_price").in("order_id",active.map(o=>o.id));
  if(itemError){notify(itemError.message,"error");return}
+ active.forEach(o=>{const orderItems=(items||[]).filter(i=>i.order_id===o.id);staffServeDelays[o.id]=orderItems.some(itemNeedsPreparation)});
  $("orders").innerHTML='<div class="staff-order-grid">'+active.map(o=>{
  const t=(tables||[]).find(x=>x.id===o.table_id);const accepted=!!o.accepted_at||String(o.status).toLowerCase()==="accepted";
  return '<article class="order"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">Order #'+esc(o.order_code||shortCode(o.id))+'</div><h2 style="font-size:23px">Table '+esc(t?String(t.table_number).replace(/^0+/,"")||"1":"?")+'</h2></div><span class="muted">'+esc(new Date(o.created_at).toLocaleTimeString())+'</span></div><p><strong>'+esc(o.customer_name)+'</strong> · '+esc(o.customer_phone||"No phone")+'</p>'+
@@ -286,7 +297,7 @@ async function loadOrders(){
  updateServeLocks();
  await loadEditRequests();
 }
-function updateServeLocks(){document.querySelectorAll(".served-btn").forEach(btn=>{const action=btn.getAttribute("onclick")||"";const marker="markServed('";const pos=action.indexOf(marker);if(pos<0)return;const idStart=pos+marker.length;const idEnd=action.indexOf("'",idStart);const orderId=action.slice(idStart,idEnd);const acceptedAt=staffAcceptTimes[orderId]||0;if(!acceptedAt){btn.disabled=true;btn.textContent="🔒 Accept first";return}const ms=acceptedAt+300000-Date.now();if(ms<=0){btn.disabled=false;btn.textContent="Served 👍🏻";return}btn.disabled=true;const total=Math.ceil(ms/1000);btn.textContent="🔒 Serve in "+String(Math.floor(total/60)).padStart(2,"0")+":"+String(total%60).padStart(2,"0")})}
+function updateServeLocks(){document.querySelectorAll(".served-btn").forEach(btn=>{const action=btn.getAttribute("onclick")||"";const marker="markServed('";const pos=action.indexOf(marker);if(pos<0)return;const idStart=pos+marker.length;const idEnd=action.indexOf("'",idStart);const orderId=action.slice(idStart,idEnd);const acceptedAt=staffAcceptTimes[orderId]||0;if(!acceptedAt){btn.disabled=true;btn.textContent="🔒 Accept first";return}const delay=(staffServeDelays[orderId]===false)?0:300000;const ms=acceptedAt+delay-Date.now();if(ms<=0){btn.disabled=false;btn.textContent="Served 👍🏻";return}btn.disabled=true;const total=Math.ceil(ms/1000);btn.textContent="🔒 Serve in "+String(Math.floor(total/60)).padStart(2,"0")+":"+String(total%60).padStart(2,"0")})}
 setInterval(()=>{if(staffMode&&$("dashboard")&&!$("dashboard").classList.contains("hidden"))updateServeLocks()},1000);
 async function acceptOrder(id){const {error}=await db.rpc("accept_table_order",{p_order_id:id});if(error){notify("Could not accept order: "+error.message,"error");return}notify("Order accepted. Customer's 2-minute timer has started.");await loadOrders()}
 async function setOrderStatus(id,status){const {error}=await db.from("orders").update({status}).eq("id",id).eq("restaurant_id",restaurantId);if(error){notify("Could not update status: "+error.message,"error");return}notify("Order status changed to "+status+".");await loadOrders()}
@@ -309,7 +320,7 @@ async function respondEditRequest(id,allow){
 }
 
 async function updateStatus(id){const status=$("status-"+id).value;const {error}=await db.from("orders").update({status}).eq("id",id).eq("restaurant_id",restaurantId);if(error){notify("Status update failed: "+error.message,"error");return}notify("Order status updated.");await loadOrders()}
-function markServed(id){const acceptedAt=staffAcceptTimes[id]||0;if(!acceptedAt||Date.now()<acceptedAt+300000){notify(!acceptedAt?"Accept this order first.":"Served unlocks 5 minutes after acceptance.","error");return}pendingModalAction=async()=>{const {error}=await db.from("orders").update({status:"served"}).eq("id",id).eq("restaurant_id",restaurantId);if(error){notify("Could not mark order served: "+error.message,"error");return}notify("Order marked served and removed from the active list.");await loadOrders()};showModal("Mark this order as served?","After confirmation, this order will disappear from the active customer and kitchen order lists. The order record will remain in Supabase.","Mark served")}
+function markServed(id){const acceptedAt=staffAcceptTimes[id]||0;const delay=(staffServeDelays[id]===false)?0:300000;if(!acceptedAt||Date.now()<acceptedAt+delay){notify(!acceptedAt?"Accept this order first.":"Prepared dishes unlock Served 5 minutes after acceptance.","error");return}pendingModalAction=async()=>{const {error}=await db.from("orders").update({status:"served"}).eq("id",id).eq("restaurant_id",restaurantId);if(error){notify("Could not mark order served: "+error.message,"error");return}notify("Order marked served and removed from the active list.");await loadOrders()};showModal("Mark this order as served?","After confirmation, this order will disappear from the active customer and kitchen order lists. The order record will remain in Supabase.","Mark served")}
 function showModal(title,message,buttonText){$("modalTitle").textContent=title;$("modalMessage").textContent=message;$("modalConfirmBtn").textContent=buttonText;$("appModal").classList.remove("hidden")}
 function closeModal(){$("appModal").classList.add("hidden");pendingModalAction=null}
 async function confirmModalAction(){const action=pendingModalAction;closeModal();if(action)await action()}
