@@ -47,6 +47,26 @@ main{width:100%;max-width:1720px;padding-left:clamp(12px,2.2vw,34px);padding-rig
 @media(min-width:651px) and (max-width:1099px){.staff-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.orders-page #customerOrdersList{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-order-grid>.order{padding:16px}}
 @media(max-width:650px){main{padding-left:12px;padding-right:12px}.orders-page #customerOrdersList,.staff-order-grid{grid-template-columns:minmax(0,1fr)}.orders-page #customerOrdersPanel{min-height:calc(100dvh - 105px);padding:14px}.orders-page #customerOrdersList>.order,.staff-order-grid>.order{padding:15px!important}.staff-order-grid .order-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.section-head{align-items:flex-start}.table-pill{padding:8px 10px}}
 @media(hover:none){.card:hover,.order:hover,.photo img{transform:none}.primary:active,.secondary:active,.accept-btn:active,.served-btn:active,.add:active{transform:scale(.985)}}
+
+/* Horizontal order boards: full-width customer orders, compact staff cards, side-by-side food items */
+.orders-page #customerOrdersList{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;width:100%;align-items:stretch}
+.orders-page #customerOrdersList>.order{width:100%;max-width:none;min-width:0;padding:clamp(14px,2vw,26px)!important}
+.orders-page #customerOrdersList>.orders-toolbar{grid-column:1/-1;width:100%}
+.orders-page #customerOrdersList>.order .order-item{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0}
+.orders-page #customerOrdersList>.order .order-item .qty{grid-column:2/-1;justify-self:start}
+.staff-order-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important;align-items:stretch;width:100%}
+.staff-order-grid>.order{min-width:0;width:100%;padding:clamp(12px,1.2vw,19px)!important}
+.staff-order-grid .order-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:8px;align-items:center;min-width:0;padding:8px 0}
+.staff-order-grid .order-item-photo{width:42px;height:42px;flex-basis:42px}
+.staff-order-grid .order-item-info{min-width:0}
+.staff-order-grid .order-item-info strong{font-size:13px;line-height:1.25}
+.staff-order-grid .order-item-price{font-size:12px}
+.staff-order-grid .order-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+.staff-order-grid .order-actions button{min-width:0;padding:10px 7px;font-size:12px;overflow-wrap:anywhere}
+@media(min-width:1200px){.staff-order-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.staff-order-grid .order-items,.staff-order-grid .items-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px}}
+@media(min-width:651px) and (max-width:1199px){.staff-order-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.staff-order-grid .order-item{grid-template-columns:38px minmax(0,1fr) auto;gap:7px}.staff-order-grid .order-item-photo{width:38px;height:38px}}
+@media(max-width:650px){.orders-page #customerOrdersList{grid-template-columns:minmax(0,1fr)!important}.staff-order-grid{grid-template-columns:minmax(0,1fr)!important}.staff-order-grid .order-item{grid-template-columns:42px minmax(0,1fr) auto}.orders-page #customerOrdersList>.order{padding:14px!important}}
+
 </style>
 </head>
 <body>
