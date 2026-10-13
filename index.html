@@ -301,14 +301,28 @@ const IMAGE_OVERRIDES = {
   lemonade:"lemonade.jpg", water:"water.jpg", mineralwater:"water.jpg"
 };
 function imageFor(item) {
-  const explicit = String(item?.image_path || "").trim().replace(/^images\//, "");
+  const explicit = String(item?.image_path || "").trim();
+  if (explicit) {
+    if (/^https?:\/\//i.test(explicit)) return explicit;
+    return explicit.startsWith("images/") ? explicit : "images/" + explicit;
+  }
   const key = slug(item?.name || item?.item_name || "");
-  const filename = explicit || IMAGE_OVERRIDES[key] || (key ? key + ".jpg" : "");
-  return filename ? "images/" + filename : "";
+  const filename = IMAGE_OVERRIDES[key] || (key ? key + ".jpg" : "");
+  // Use a real food photo automatically for every item, even when no local file exists.
+  // The search term includes the actual menu-item name so different dishes get relevant photos.
+  const query = encodeURIComponent(String(item?.name || item?.item_name || "food") + ",food");
+  return "https://loremflickr.com/640/480/" + query;
 }
 function imageFallback(img) {
+  if (!img.dataset.fallbackTried) {
+    img.dataset.fallbackTried = "1";
+    const card = img.closest(".card");
+    const title = card?.querySelector("h3")?.textContent || img.alt || "food";
+    img.src = "https://loremflickr.com/640/480/food," + encodeURIComponent(title);
+    return;
+  }
   img.onerror = null;
-  img.src = "https://placehold.co/600x400/f0eee4/536557?text=Photo+coming+soon";
+  img.src = "https://placehold.co/600x400/f0eee4/536557?text=" + encodeURIComponent(img.alt || "Food");
 }
 function renderMenu() {
   const list=menuItems.filter(x=>activeCategory==="All"||(x.category||"Popular")===activeCategory);
