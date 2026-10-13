@@ -118,6 +118,13 @@ main{width:100%;max-width:1720px;padding-left:clamp(12px,2.2vw,34px);padding-rig
  .orders-page #customerOrdersList>.order .order-items-grid .order-item-price{font-size:12px}
  .orders-page #customerOrdersList>.order .total-row{font-size:19px;padding:16px 0}
 }
+
+/* Compact one-second toast notifications */
+#toastStack{position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;max-width:calc(100vw - 28px)}
+.app-toast{pointer-events:auto;display:flex;align-items:center;gap:9px;max-width:min(340px,calc(100vw - 28px));padding:10px 13px;border-radius:12px;background:#fff;color:#172033;border:1px solid #dce5ed;border-left:4px solid #0284c7;box-shadow:0 8px 28px rgba(15,23,42,.2);font-size:13px;font-weight:650;line-height:1.35;animation:toastIn .16s ease-out}
+.app-toast.error{border-left-color:#dc2626}.app-toast.success{border-left-color:#16a34a}.app-toast.out{opacity:0;transform:translateY(8px);transition:opacity .16s,transform .16s}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){#toastStack{right:10px;bottom:10px}.app-toast{font-size:12px;padding:9px 11px}}
 </style>
 </head>
 <body>
@@ -140,7 +147,11 @@ const params=new URLSearchParams(location.search),restaurantId=params.get("resta
 let menuItems=[],cart={},activeCategory="All",tableNumber="1",channel=null,customerOrderChannel=null,pendingModalAction=null,customerEditing={},customerEditStatus={},customerDrafts={},customerApprovalUntil={},orderTimer=null,editPollTimer=null;
 const staffAcceptTimes={};const $=id=>document.getElementById(id),money=n=>"₹"+Number(n||0).toFixed(2);
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function notify(message,type="info"){const el=$("notice");el.textContent=message;el.className="notice "+type;el.classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})}
+function notify(message,type="info"){
+ let stack=$("toastStack");if(!stack){stack=document.createElement("div");stack.id="toastStack";stack.setAttribute("aria-live","polite");stack.setAttribute("aria-atomic","false");document.body.appendChild(stack)}
+ const el=document.createElement("div");el.className="app-toast "+(type==="error"?"error":type==="success"?"success":"");el.textContent=String(message);stack.appendChild(el);
+ window.setTimeout(()=>{el.classList.add("out");window.setTimeout(()=>el.remove(),170)},1000);
+}
 function shortCode(id){return String(id||"").replace(/-/g,"").slice(0,6).toUpperCase()}
 async function init(){$("customerView").classList.toggle("hidden",staffMode);$("staffView").classList.toggle("hidden",!staffMode);if(staffMode){await checkSession();return}if(ordersPage){document.body.classList.add("orders-page");$("customerOrdersPanel").classList.remove("hidden")}await loadTable();await Promise.all([loadMenu(),loadCustomerOrders()]);if(addToOrderMode){$("submitBtn").textContent="Add to existing order →";await openCart()}}
 async function loadTable(){const {data,error}=await db.from("restaurant_tables").select("table_number").eq("id",tableId).eq("restaurant_id",restaurantId).maybeSingle();if(error||!data){$("tableLabel").textContent="Table not found";notify("This QR table is not configured correctly. Please contact the restaurant.","error");return}tableNumber=String(data.table_number).replace(/^0+/,"")||"1";$("tableLabel").textContent="TABLE "+tableNumber;$("confirmationTable").textContent="Table "+tableNumber;$("customerOrdersBtn").classList.remove("hidden");subscribeCustomerOrders()}
