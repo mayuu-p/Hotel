@@ -286,8 +286,8 @@ function setCategory(c) {
   renderCategories();
   renderMenu();
 }
-// Image filenames live in the GitHub images/ folder.
-// Known names can use a custom filename; all other items default to <item-name-without-spaces>.jpg.
+// All 60 food photos are stored in the repository root and referenced by this HTML file.
+// Known menu names map to the matching uploaded JPG filename.
 const IMAGE_OVERRIDES = {
   coffee:"ccoffee.jpg", coldcoffee:"coldcoffee.jpg", tea:"tea.jpg",
   masalachai:"masala-chai.jpg", cappuccino:"cappuccino.jpg", latte:"latte.jpg",
@@ -333,7 +333,7 @@ function imageFor(item) {
     vegmanchurian:"vegmanchurian.jpg", vegnuggets:"vegnuggets.jpg",
     vegpakora:"vegpakora.jpg", vegpulao:"vegpulao.jpg",
     vegsandwich:"vegsandwich.jpg", whitesaucepasta:"whitesaucepasta.jpg",
-    tea:"masalachai.jpg", chai:"masalachai.jpg", "masala tea":"masalachai.jpg"
+    tea:"masala-chai.jpg", chai:"masala-chai.jpg", masalachai:"masalachai.jpg", "masala tea":"masala-chai.jpg"
   };
 
   if (exact[name]) return exact[name];
@@ -341,13 +341,9 @@ function imageFor(item) {
   return name + ".jpg";
 }
 function imageFallback(img) {
-  if (!img.dataset.fallbackTried) {
-    img.dataset.fallbackTried = "1";
-    img.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
-    return;
-  }
+  // Never substitute an unrelated stock food photo; show a neutral placeholder instead.
   img.onerror = null;
-  img.src = "https://placehold.co/600x400/f0eee4/536557?text=Food";
+  img.src = "https://placehold.co/600x400/f0eee4/536557?text=Photo+not+available";
 }
 function renderMenu() {
   const list=menuItems.filter(x=>activeCategory==="All"||(x.category||"Popular")===activeCategory);
