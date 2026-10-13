@@ -219,7 +219,39 @@ async function loadCustomerOrders(){
 }
 
 function updateCustomerTimers(orders){if(orderTimer)clearInterval(orderTimer);const tick=()=>{(orders||[]).forEach(o=>{const el=$("timer-"+o.id);if(!el)return;let until=o.accepted_at?new Date(o.accepted_at).getTime()+120000:0;if(customerEditStatus[o.id]==="approved"&&customerApprovalUntil[o.id])until=customerApprovalUntil[o.id];const ms=Math.max(0,until-Date.now());el.classList.toggle("expired",ms===0);el.textContent=ms>0?'⏱ '+String(Math.floor(ms/60000)).padStart(2,'0')+':'+String(Math.floor(ms/1000)%60).padStart(2,'0'):'⏱ Edit window ended';});};tick();orderTimer=setInterval(tick,1000)}
-async function askToEditOrder(id,remaining){if(customerEditing[id])return;const {error}=await db.rpc("request_table_order_edit",{p_order_id:id,p_table_id:tableId});if(error){notify("Could not request edit: "+error.message,"error");return}customerEditStatus[id]="pending";notify("Edit request sent to staff.");await loadCustomerOrders()}
+async function beginCustomerEdit(orderId){
+ const {data:order,error:orderError}=await db.from("orders").select("accepted_at,edit_count,status").eq("id",orderId).eq("table_id",tableId).maybeSingle();
+ if(orderError||!order){notify("Could not open edit mode. Please refresh and try again.","error");return}
+ if(Number(order.edit_count||0)>=5){notify("This order has reached the 5-edit limit.","error");await loadCustomerOrders();return}
+ const acceptedUntil=order.accepted_at?new Date(order.accepted_at).getTime()+120000:0;
+ const approvedUntil=Number(customerApprovalUntil[orderId]||0);
+ const allowedUntil=customerEditStatus[orderId]==="approved"&&approvedUntil>Date.now()?approvedUntil:acceptedUntil;
+ if(!allowedUntil||Date.now()>allowedUntil){notify("The 2-minute edit window has ended. Request staff approval to edit.","error");await loadCustomerOrders();return}
+ const {data:items,error:itemError}=await db.from("order_items").select("menu_item_id,item_name,quantity,unit_price").eq("order_id",orderId);
+ if(itemError){notify("Could not load order items: "+itemError.message,"error");return}
+ const draft={};
+ (items||[]).forEach(i=>{if(i.menu_item_id)draft[i.menu_item_id]={id:i.menu_item_id,name:i.item_name,quantity:Number(i.quantity)||1,price:Number(i.unit_price)||0}});
+ if(!Object.keys(draft).length){notify("No editable items were found in this order.","error");return}
+ customerDrafts[orderId]=draft;customerEditing[orderId]=true;
+ notify("Edit mode enabled. Make changes and confirm before the 2-minute window ends.");
+ await loadCustomerOrders();
+}
+async function askToEditOrder(id,remaining){
+ if(customerEditing[id])return;
+ if(Number(remaining)>0||customerEditStatus[id]==="approved"){
+   await beginCustomerEdit(id);return;
+ }
+ if(customerEditStatus[id]==="pending"){notify("Edit request is already waiting for staff approval.");return}
+ const {data,error}=await db.rpc("request_table_order_edit",{p_order_id:id,p_table_id:tableId});
+ if(error){notify("Could not request edit: "+error.message,"error");return}
+ if(data?.status==="within_window"||data?.status==="approved"){
+   if(data.edit_until)customerApprovalUntil[id]=new Date(data.edit_until).getTime();
+   await beginCustomerEdit(id);return;
+ }
+ customerEditStatus[id]="pending";
+ notify("Edit request sent to staff. You can edit after staff allows it.");
+ await loadCustomerOrders();
+}
 function draftOrderQty(orderId,menuId,delta){const draft=customerDrafts[orderId];if(!draft||!draft[menuId])return;const next=draft[menuId].quantity+delta;if(next>50)return;if(next<=0)delete draft[menuId];else draft[menuId].quantity=next;const card=document.querySelector(`[data-order-card="${orderId}"]`);if(card){const row=card.querySelector(`[data-line="${menuId}"]`);if(row){if(!draft[menuId])row.remove();else{const q=row.querySelector("[data-quantity]");if(q)q.textContent=String(draft[menuId].quantity);const line=row.querySelector("[data-line-total]");if(line)line.textContent=money(draft[menuId].price*draft[menuId].quantity)}}const total=Object.values(draft).reduce((s,i)=>s+i.price*i.quantity,0);const totalEl=card.querySelector("[data-order-total]");if(totalEl)totalEl.textContent=money(total);const confirm=card.querySelector("[data-confirm-edit]");if(confirm)confirm.disabled=!Object.values(draft).some(i=>i.quantity>0)}if(!Object.values(draft).length)notify("Order must contain at least one item.","error")}
 function draftAddItem(orderId){const sel=$("add-item-"+orderId);if(!sel)return;const item=menuItems.find(m=>m.id===sel.value);if(!item)return;const draft=customerDrafts[orderId]||(customerDrafts[orderId]={});if(!draft[item.id])draft[item.id]={id:item.id,name:item.name,quantity:0,price:Number(item.price)};if(draft[item.id].quantity>=50)return notify("Maximum quantity is 50.","error");draft[item.id].quantity++;const card=document.querySelector(`[data-order-card="${orderId}"]`);const row=card?.querySelector(`[data-line="${item.id}"]`);if(row){const q=row.querySelector("[data-quantity]");if(q)q.textContent=String(draft[item.id].quantity);const line=row.querySelector("[data-line-total]");if(line)line.textContent=money(draft[item.id].price*draft[item.id].quantity);const totalEl=card.querySelector("[data-order-total]");if(totalEl)totalEl.textContent=money(Object.values(draft).reduce((s,i)=>s+i.price*i.quantity,0))}else loadCustomerOrders()}
 async function confirmOrderEdit(orderId){
