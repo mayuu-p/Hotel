@@ -146,7 +146,7 @@ function subscribeCustomerOrders(){
 function newOrder(){$("confirmation").classList.add("hidden");$("customerName").value="";$("customerPhone").value="";window.scrollTo({top:0,behavior:"smooth"})}
 /* Staff dashboard */
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();const {error}=await db.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error){notify("Login failed: "+error.message,"error");return}await checkSession()});
-async function checkSession(){const {data}=await db.auth.getSession();if(data.session){$("loginPanel").classList.add("hidden");if(tablesPage){$("dashboard").classList.add("hidden");$("tablesPage").classList.remove("hidden");renderTableLinks()}else{$("tablesPage").classList.add("hidden");$("dashboard").classList.remove("hidden");await loadOrders();subscribeOrders()}}}
+async function checkSession(){const {data}=await db.auth.getSession();if(data.session){$("loginPanel").classList.add("hidden");await loadMenu();if(tablesPage){$("dashboard").classList.add("hidden");$("tablesPage").classList.remove("hidden");renderTableLinks()}else{$("tablesPage").classList.add("hidden");$("dashboard").classList.remove("hidden");await loadOrders();subscribeOrders()}}}
 const TABLE_LINK_IDS=[
 ["01","22222222-2222-4222-8222-222222222222"],["02","33333333-3333-4333-8333-333333333333"],
 ["03","96c054ec-ad33-4816-9ca6-0969199a1ca3"],["04","972b0889-e660-4b1d-9008-92a57bd0baa2"],
@@ -171,12 +171,12 @@ async function loadOrders(){
  const {data:tables}=await db.from("restaurant_tables").select("id,table_number").eq("restaurant_id",restaurantId);
  const {data:items,error:itemError}=await db.from("order_items").select("order_id,item_name,quantity,unit_price").in("order_id",active.map(o=>o.id));
  if(itemError){notify(itemError.message,"error");return}
- $("orders").innerHTML=active.map(o=>{
+ $("orders").innerHTML='<div class="staff-order-grid">'+active.map(o=>{
  const t=(tables||[]).find(x=>x.id===o.table_id);const accepted=!!o.accepted_at||String(o.status).toLowerCase()==="accepted";
  return '<article class="order"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">Order #'+esc(o.order_code||shortCode(o.id))+'</div><h2 style="font-size:23px">Table '+esc(t?String(t.table_number).replace(/^0+/,"")||"1":"?")+'</h2></div><span class="muted">'+esc(new Date(o.created_at).toLocaleTimeString())+'</span></div><p><strong>'+esc(o.customer_name)+'</strong> · '+esc(o.customer_phone||"No phone")+'</p>'+
  (items||[]).filter(i=>i.order_id===o.id).map(i=>{const mi=menuItems.find(m=>m.name===i.item_name);const src=mi?imageFor(mi):"";return '<div class="order-item">'+(src?'<div class="order-item-photo"><img loading="lazy" src="'+esc(src)+'" alt="'+esc(i.item_name)+'" onerror="imageFallback(this)"></div>':'<div class="order-item-photo" aria-hidden="true"></div>')+'<div class="order-item-info"><strong>'+esc(i.item_name)+' × '+i.quantity+'</strong><span class="muted">'+money(i.unit_price)+' each</span></div><span class="order-item-price">'+money(i.unit_price*i.quantity)+'</span></div>'}).join("")+
  '<div class="total-row"><span>Total</span><span>'+money(o.total)+'</span></div><div class="order-actions" style="justify-content:space-between;align-items:center"><button class="accept-btn" '+(accepted?'disabled':'')+' onclick="acceptOrder(\''+o.id+'\')">'+(accepted?'✓ Accepted':'Accept order')+'</button><button class="secondary" onclick="setOrderStatus(\''+o.id+'\',\'preparing\')">Preparing</button><button class="secondary" onclick="setOrderStatus(\''+o.id+'\',\'ready\')">Ready</button><button class="served-btn" onclick="markServed(\''+o.id+'\')">Served 👍🏻</button></div></article>';
- }).join("");
+ }).join("")+'</div>';
  await loadEditRequests();
 }
 async function acceptOrder(id){const {error}=await db.rpc("accept_table_order",{p_order_id:id});if(error){notify("Could not accept order: "+error.message,"error");return}notify("Order accepted. Customer's 2-minute timer has started.");await loadOrders()}
