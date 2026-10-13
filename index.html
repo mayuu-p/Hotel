@@ -306,11 +306,11 @@ function imageFor(item) {
     if (/^https?:\/\//i.test(explicit)) return explicit;
     return explicit.startsWith("images/") ? explicit : "images/" + explicit;
   }
-  const key = slug(item?.name || item?.item_name || "");
-  const filename = IMAGE_OVERRIDES[key] || (key ? key + ".jpg" : "");
-  // Prefer bundled food photos when present. Otherwise fetch a photo using the exact menu name.
-  if (filename) return "images/" + filename;
-  return "https://loremflickr.com/640/480/" + encodeURIComponent(String(item?.name || item?.item_name || "food"));
+  const name = String(item?.name || item?.item_name || "food").trim();
+  // All menu items use an internet-hosted photo matched to the item's name.
+  // A stable lock value keeps the chosen photo from changing on every refresh.
+  const lock = [...name.toLowerCase()].reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) >>> 0, 7) + 1;
+  return "https://loremflickr.com/640/480/" + encodeURIComponent(name.replace(/\\s+/g, ",")) + "?lock=" + lock;
 }
 function imageFallback(img) {
   const card = img.closest(".card");
