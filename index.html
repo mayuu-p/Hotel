@@ -329,10 +329,10 @@ async function loadOrders(){
  if(error){$("orders").classList.remove("is-refreshing");$("orders").textContent="Orders could not load. Check staff access to the orders table.";notify("Staff orders query failed: "+error.message,"error");staffOrdersRefreshBusy=false;return}
  $("orders").classList.remove("is-refreshing");
  const active=(orders||[]).filter(o=>!["served","cancelled"].includes(String(o.status||"").toLowerCase()));active.forEach(o=>{staffAcceptTimes[o.id]=o.accepted_at?new Date(o.accepted_at).getTime():0});
- if(!active.length){$("orders").textContent="No active orders. New orders will appear here live.";await loadEditRequests();return}
+ if(!active.length){$("orders").textContent="No active orders. New orders will appear here live.";await loadEditRequests();staffOrdersRefreshBusy=false;return}
  const {data:tables}=await db.from("restaurant_tables").select("id,table_number").eq("restaurant_id",restaurantId);
  const {data:items,error:itemError}=await db.from("order_items").select("order_id,item_name,quantity,unit_price").in("order_id",active.map(o=>o.id));
- if(itemError){notify(itemError.message,"error");return}
+ if(itemError){notify("Could not load order items: "+itemError.message,"error");staffOrdersRefreshBusy=false;return}
  active.forEach(o=>{const orderItems=(items||[]).filter(i=>i.order_id===o.id);staffServeDelays[o.id]=orderItems.some(itemNeedsPreparation)});
  $("orders").innerHTML='<div class="staff-order-grid">'+active.map(o=>{
  const t=(tables||[]).find(x=>x.id===o.table_id);const accepted=!!o.accepted_at||String(o.status).toLowerCase()==="accepted";
