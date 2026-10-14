@@ -183,7 +183,8 @@ const IMAGE_BY_NORMALIZED_NAME={
 };
 function imageFor(item){
   const path=String(item?.image_path||"").trim();
-  // Supabase's path must be a simple root filename, not an injected URL.
+  // Accept explicit HTTPS image URLs as well as the legacy root JPG filenames.
+  if(/^https:\/\/[^\s"'<>]+$/i.test(path))return path;
   if(path && /^[a-z0-9-]+\.jpg$/i.test(path))return "https://raw.githubusercontent.com/mayuu-p/tester/main/"+encodeURIComponent(path)+"?v=2";
   const normalized=String(item?.name||item?.item_name||"").toLowerCase().replace(/[^a-z0-9]/g,"");
   return IMAGE_BY_NORMALIZED_NAME[normalized]||"";
