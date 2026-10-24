@@ -137,7 +137,7 @@ main{width:100%;max-width:1720px;padding-left:clamp(12px,2.2vw,34px);padding-rig
 <section id="cartPanel" class="panel hidden"><div class="section-head" style="margin-top:0"><h2>Your order</h2><button class="secondary" onclick="closeCart()">Continue browsing</button></div><div id="cartRows"></div><div class="total-row"><span>Total</span><span id="cartTotal">₹0</span></div><div class="field"><label for="customerName">Your name *</label><input id="customerName" maxlength="100" placeholder="Enter your name"></div><div class="field"><label for="customerPhone">Phone number (optional)</label><input id="customerPhone" maxlength="20" type="tel" placeholder="Your phone number"></div><button class="primary" id="submitBtn" style="width:100%" onclick="submitOrder()">Place my order →</button><p class="muted">Your order will be sent to the restaurant.</p></section>
 <section id="confirmation" class="panel hidden"><div class="confirm"><div class="confirm-icon">✓</div><div class="eyebrow" style="margin-top:18px">Order received</div><h2 style="margin-top:9px">You're all set!</h2><p class="muted">Show this number to your waiter if you need help.</p><div id="confirmationCode" class="order-code">#------</div><p id="confirmationTotal"></p><p id="confirmationTable" class="muted"></p><button class="primary" onclick="newOrder()">Order something else</button></div></section>
 </section>
-<section id="staffView" class="hidden"><div class="panel" id="loginPanel"><div class="eyebrow">Team access</div><h2>Staff dashboard</h2><p class="muted">Sign in using your Supabase staff account.</p><form id="loginForm"><div class="field"><label>Email</label><input id="staffEmail" type="email" required autocomplete="username"></div><div class="field"><label>Password</label><input id="staffPassword" type="password" required autocomplete="current-password"></div><button class="primary" style="width:100%">Sign in</button></form></div><div id="dashboard" class="hidden"><div class="panel"><div class="section-head" style="margin-top:0;flex-wrap:wrap"><div><h2>Kitchen & orders</h2><p id="staffWelcome" class="muted" style="margin:5px 0 0">Staff dashboard</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" onclick="openTablesPage()">All tables</button><button class="secondary" id="staffNotificationButton" onclick="enableStaffNotifications()">🔔 Enable alerts</button><button class="secondary" onclick="loadOrders()">Refresh</button></div></div><p class="muted">Orders refresh here. Every order shows the table number it came from.</p><button class="secondary" onclick="logout()">Sign out</button></div><div id="editRequests"></div><div id="orders"></div></div><div id="tablesPage" class="hidden"><div class="panel"><div class="section-head" style="margin-top:0;flex-wrap:wrap"><div><div class="eyebrow">Table management</div><h2>All 10 tables</h2></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" onclick="copyAllTableLinks()">Copy all links</button><button class="secondary" onclick="backToKitchen()">← Kitchen</button></div></div><p class="muted">Select a table to copy its customer order link or open the order page. QR codes are available in the printable QR sheet.</p><div id="tableLinks" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))"></div></div></div></section>
+<section id="staffView" class="hidden"><div class="panel" id="loginPanel"><div class="eyebrow">Team access</div><h2>Staff dashboard</h2><p class="muted">Sign in using your Supabase staff account.</p><form id="loginForm"><div class="field"><label>Email</label><input id="staffEmail" type="email" required autocomplete="username"></div><div class="field"><label>Password</label><input id="staffPassword" type="password" required autocomplete="current-password"></div><button class="primary" style="width:100%">Sign in</button></form></div><div id="dashboard" class="hidden"><div class="panel"><div class="section-head" style="margin-top:0;flex-wrap:wrap"><div><h2>Kitchen & orders</h2><p id="staffWelcome" class="muted" style="margin:5px 0 0">Staff dashboard</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" onclick="openTablesPage()">All tables</button><button class="secondary" onclick="loadOrders()">Refresh</button></div></div><p class="muted">Orders refresh here. Every order shows the table number it came from.</p><button class="secondary" onclick="logout()">Sign out</button></div><div id="editRequests"></div><div id="orders"></div></div><div id="tablesPage" class="hidden"><div class="panel"><div class="section-head" style="margin-top:0;flex-wrap:wrap"><div><div class="eyebrow">Table management</div><h2>All 10 tables</h2></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" onclick="copyAllTableLinks()">Copy all links</button><button class="secondary" onclick="backToKitchen()">← Kitchen</button></div></div><p class="muted">Select a table to copy its customer order link or open the order page. QR codes are available in the printable QR sheet.</p><div id="tableLinks" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))"></div></div></div></section>
 </main><div id="bottomCart" class="bottom-cart hidden"><div><strong id="bottomTotal">₹0</strong><div id="bottomCount" class="cart-count">0 items</div></div><button onclick="openCart()">View cart →</button></div><footer>Thyme & Whisk · Freshly prepared, thoughtfully served</footer>
 <script>
 const SUPABASE_URL="https://savepmyxoctonhjqgdxj.supabase.co";
@@ -312,45 +312,6 @@ function renderTableLinks(){
 async function copyTableLink(id){const url=tableOrderUrl(id);try{await navigator.clipboard.writeText(url);notify("Table order link copied.")}catch(e){window.prompt("Copy this table order link:",url)}}
 async function copyAllTableLinks(){const all=TABLE_LINK_IDS.map(([num,id])=>"Table "+Number(num)+": "+tableOrderUrl(id)).join("\\n");try{await navigator.clipboard.writeText(all);notify("All 10 table links copied.")}catch(e){window.prompt("Copy all table links:",all)}}
 const staffServeDelays={};
-let staffSeenOrderIds=new Set(),staffOrderBaselineReady=false,staffAudioContext=null;
-function playStaffOrderSound(){
- try{
-  const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;
-  if(!staffAudioContext)staffAudioContext=new AudioCtx();
-  if(staffAudioContext.state==="suspended")staffAudioContext.resume();
-  const ctx=staffAudioContext,now=ctx.currentTime;
-  [0,0.22].forEach((offset,index)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type="sine";osc.frequency.setValueAtTime(index?1046:784,now+offset);gain.gain.setValueAtTime(0.0001,now+offset);gain.gain.exponentialRampToValueAtTime(0.18,now+offset+0.025);gain.gain.exponentialRampToValueAtTime(0.0001,now+offset+0.18);osc.connect(gain);gain.connect(ctx.destination);osc.start(now+offset);osc.stop(now+offset+0.2)});
- }catch(e){/* Browser audio may require a user gesture. */ }
-}
-async function enableStaffNotifications(){
- const button=$("staffNotificationButton");
- try{
-  if(!("Notification" in window)){notify("Browser notifications are not supported here. Website popups and sound can still work.");if(button)button.textContent="🔔 Popup alerts on";return}
-  const permission=Notification.permission==="default"?await Notification.requestPermission():Notification.permission;
-  if(permission==="granted"){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(AudioCtx){if(!staffAudioContext)staffAudioContext=new AudioCtx();await staffAudioContext.resume();playStaffOrderSound()}}catch(e){}if(button)button.textContent="🔔 Alerts enabled";notify("Order alerts enabled on this browser.","success")}
-  else{if(button)button.textContent="🔔 Allow in browser settings";notify("Allow notifications in your browser/site settings. Website popups will still appear.","error")}
- }catch(e){notify("Could not enable browser notifications. Website popups will still appear.","error")}
-}
-function alertStaffForNewOrder(order,tableNumber){
- const table=String(tableNumber||"?").replace(/^0+/,"")||"1";
- const code=order.order_code||shortCode(order.id);
- const message="New order received — Table "+table+" · Order #"+code;
- notify("🔔 "+message,"success");
- playStaffOrderSound();
- if("Notification" in window&&Notification.permission==="granted"){
-  try{const n=new Notification("New Restaurant Order",{body:"Table "+table+" · Order #"+code,tag:"restaurant-order-"+order.id,renotify:false});n.onclick=()=>{window.focus();n.close()}}catch(e){}
- }
-}
-function itemNeedsPreparation(orderItem){
- const name=String(orderItem.item_name||"").toLowerCase();
- const menu=menuItems.find(m=>String(m.name||"").toLowerCase()===name);
- const category=String(menu?.category||"").toLowerCase();
- const readyKeywords=/\b(water|mineral water|bottled water|soda|soft drink|coke|coca cola|pepsi|sprite|fanta|thums up|7up|packaged juice|juice box|canned drink|energy drink|bottled drink)\b/;
- if(readyKeywords.test(name))return false;
- if(/\b(water|soft drinks|packaged drinks|bottled drinks)\b/.test(category))return false;
- return true;
-}
-let staffOrdersRefreshBusy=false;
 async function loadOrders(){
  if(staffOrdersRefreshBusy)return;
  staffOrdersRefreshBusy=true;
@@ -358,13 +319,9 @@ async function loadOrders(){
  const {data:orders,error}=await db.from("orders").select("id,order_code,table_id,customer_name,customer_phone,status,total,created_at,accepted_at,edit_count").eq("restaurant_id",restaurantId).order("created_at",{ascending:false}).limit(100);
  if(error){$("orders").classList.remove("is-refreshing");$("orders").textContent="Orders could not load. Check staff access to the orders table.";notify("Staff orders query failed: "+error.message,"error");staffOrdersRefreshBusy=false;return}
  $("orders").classList.remove("is-refreshing");
- const active=(orders||[]).filter(o=>!["served","cancelled"].includes(String(o.status||"").toLowerCase()));
- const newlySeen=staffOrderBaselineReady?active.filter(o=>!staffSeenOrderIds.has(o.id)):[];
- (orders||[]).forEach(o=>staffSeenOrderIds.add(o.id));staffOrderBaselineReady=true;
- active.forEach(o=>{staffAcceptTimes[o.id]=o.accepted_at?new Date(o.accepted_at).getTime():0});
+ const active=(orders||[]).filter(o=>!["served","cancelled"].includes(String(o.status||"").toLowerCase()));active.forEach(o=>{staffAcceptTimes[o.id]=o.accepted_at?new Date(o.accepted_at).getTime():0});
  if(!active.length){$("orders").textContent="No active orders. New orders will appear here live.";await loadEditRequests();staffOrdersRefreshBusy=false;return}
  const {data:tables}=await db.from("restaurant_tables").select("id,table_number").eq("restaurant_id",restaurantId);
- newlySeen.forEach(o=>{const t=(tables||[]).find(x=>x.id===o.table_id);alertStaffForNewOrder(o,t?t.table_number:"?")});
  const {data:items,error:itemError}=await db.from("order_items").select("order_id,item_name,quantity,unit_price").in("order_id",active.map(o=>o.id));
  if(itemError){notify("Could not load order items: "+itemError.message,"error");staffOrdersRefreshBusy=false;return}
  active.forEach(o=>{const orderItems=(items||[]).filter(i=>i.order_id===o.id);staffServeDelays[o.id]=orderItems.some(itemNeedsPreparation)});
